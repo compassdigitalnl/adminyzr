@@ -1,0 +1,144 @@
+import type { CollectionConfig } from 'payload'
+import { isAdmin, isOwner } from '@/payload/access/isAdmin'
+import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+
+export const Organizations: CollectionConfig = {
+  slug: 'organizations',
+  admin: {
+    useAsTitle: 'name',
+    defaultColumns: ['name', 'slug', 'kvkNumber', 'createdAt'],
+  },
+  access: {
+    // Gebruikers zien alleen hun eigen organisatie
+    read: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'owner') return true
+      const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+      return { id: { equals: orgId } }
+    },
+    // Alleen via seeding/admin — niet via gewone gebruikers
+    create: isOwner,
+    // Alleen owner/admin kan organisatie-instellingen wijzigen
+    update: isAdmin,
+    // Alleen owner kan organisatie verwijderen
+    delete: isOwner,
+  },
+  hooks: {
+    afterChange: [logAfterChange],
+    afterDelete: [logAfterDelete],
+  },
+  fields: [
+    {
+      name: 'name',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+      admin: {
+        description: 'URL-friendly identifier voor de organisatie.',
+      },
+    },
+    {
+      name: 'kvkNumber',
+      type: 'text',
+      label: 'KvK-nummer',
+    },
+    {
+      name: 'vatNumber',
+      type: 'text',
+      label: 'BTW-nummer',
+    },
+    {
+      name: 'iban',
+      type: 'text',
+      label: 'IBAN',
+    },
+    {
+      name: 'address',
+      type: 'group',
+      fields: [
+        { name: 'street', type: 'text' },
+        { name: 'houseNumber', type: 'text' },
+        { name: 'postalCode', type: 'text' },
+        { name: 'city', type: 'text' },
+        { name: 'country', type: 'text', defaultValue: 'NL' },
+      ],
+    },
+    {
+      name: 'contact',
+      type: 'group',
+      fields: [
+        { name: 'email', type: 'email' },
+        { name: 'phone', type: 'text' },
+        { name: 'website', type: 'text' },
+      ],
+    },
+    {
+      name: 'branding',
+      type: 'group',
+      fields: [
+        {
+          name: 'logo',
+          type: 'upload',
+          relationTo: 'attachments',
+        },
+        {
+          name: 'primaryColor',
+          type: 'text',
+          defaultValue: '#1e40af',
+        },
+        {
+          name: 'secondaryColor',
+          type: 'text',
+          defaultValue: '#3b82f6',
+        },
+      ],
+    },
+    {
+      name: 'invoiceSettings',
+      type: 'group',
+      label: 'Factuurinstellingen',
+      fields: [
+        {
+          name: 'prefix',
+          type: 'text',
+          defaultValue: 'INV',
+          admin: { description: 'Prefix voor factuurnummers, bijv. INV-2024-0001' },
+        },
+        {
+          name: 'nextNumber',
+          type: 'number',
+          defaultValue: 1,
+        },
+        {
+          name: 'defaultPaymentTermDays',
+          type: 'number',
+          defaultValue: 30,
+        },
+        {
+          name: 'defaultVatRate',
+          type: 'number',
+          defaultValue: 21,
+        },
+        {
+          name: 'footerText',
+          type: 'textarea',
+          admin: { description: 'Tekst onderaan factuur (bijv. bankgegevens, voorwaarden)' },
+        },
+      ],
+    },
+    {
+      name: 'deletedAt',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+  ],
+  timestamps: true,
+}

@@ -1,0 +1,117 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { cn } from '@/lib/utils'
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Clock,
+  CreditCard,
+  Package,
+  FileCheck,
+  Receipt,
+  BarChart3,
+  Settings,
+  LogOut,
+  Building2,
+} from 'lucide-react'
+
+const navItems = [
+  { key: 'dashboard', href: '', icon: LayoutDashboard },
+  { key: 'invoices', href: '/invoices', icon: FileText },
+  { key: 'purchaseInvoices', href: '/purchase-invoices', icon: Receipt },
+  { key: 'quotes', href: '/quotes', icon: FileCheck },
+  { key: 'clients', href: '/clients', icon: Users },
+  { key: 'products', href: '/products', icon: Package },
+  { key: 'timeTracking', href: '/time-tracking', icon: Clock },
+  { key: 'punchCards', href: '/punch-cards', icon: CreditCard },
+  { key: 'reports', href: '/reports', icon: BarChart3 },
+]
+
+export function Sidebar() {
+  const pathname = usePathname()
+  const t = useTranslations('nav')
+  const tAuth = useTranslations('auth')
+
+  const locale = pathname.split('/')[1] || 'nl'
+  const basePath = `/${locale}`
+
+  return (
+    <aside className="fixed inset-y-0 left-0 z-40 flex w-sidebar flex-col overflow-y-auto border-r bg-[var(--bg-card)] border-[var(--border)]">
+      {/* Logo */}
+      <div className="flex h-header items-center gap-2.5 border-b border-[var(--border)] px-5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--bg-void)]">
+          <Building2 className="h-4 w-4 text-white" strokeWidth={1.75} />
+        </div>
+        <span className="text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
+          Adminyzr
+        </span>
+      </div>
+
+      {/* Organization info */}
+      <div className="mx-3 mt-3 rounded-lg border border-[var(--border-light)] bg-[var(--bg-muted)] p-3">
+        <p className="text-[13px] font-semibold text-[var(--text-primary)]">Mijn Bedrijf</p>
+        <p className="text-xs text-[var(--text-muted)]">KvK: 12345678</p>
+      </div>
+
+      {/* Navigation */}
+      <nav className="mt-4 flex-1 space-y-0.5 px-3">
+        {navItems.map((item) => {
+          const fullHref = basePath + item.href
+          const isActive = item.href === ''
+            ? pathname === basePath || pathname === basePath + '/'
+            : pathname.startsWith(fullHref)
+
+          return (
+            <Link
+              key={item.key}
+              href={fullHref || basePath}
+              className={cn(
+                'flex items-center gap-2.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors',
+                isActive
+                  ? 'bg-[var(--blue-bg)] text-[var(--blue)] font-semibold'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+              )}
+            >
+              <item.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <span>{t(item.key)}</span>
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Divider */}
+      <div className="mx-3 my-1 h-px bg-[var(--border-light)]" />
+
+      {/* Bottom section */}
+      <div className="px-3 pb-3 space-y-0.5">
+        <Link
+          href={`${basePath}/settings`}
+          className={cn(
+            'flex items-center gap-2.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors',
+            pathname.startsWith(`${basePath}/settings`)
+              ? 'bg-[var(--blue-bg)] text-[var(--blue)] font-semibold'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+          )}
+        >
+          <Settings className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+          <span>{t('settings')}</span>
+        </Link>
+        <button
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--danger)] hover:bg-[var(--danger-bg)]"
+          onClick={() => {
+            fetch('/api/users/logout', { method: 'POST' }).then(() => {
+              window.location.href = `/${locale}/login`
+            })
+          }}
+        >
+          <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+          <span>{tAuth('logout')}</span>
+        </button>
+      </div>
+    </aside>
+  )
+}

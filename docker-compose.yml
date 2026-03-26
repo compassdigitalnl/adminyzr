@@ -1,0 +1,64 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adminyzr-app
+    restart: unless-stopped
+    ports:
+      - "3061:3061"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3061
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - adminyzr-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: adminyzr-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-adminyzr}
+      POSTGRES_USER: ${POSTGRES_USER:-adminyzr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adminyzr} -d ${POSTGRES_DB:-adminyzr}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - adminyzr-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: adminyzr-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - adminyzr-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  adminyzr-network:
+    driver: bridge

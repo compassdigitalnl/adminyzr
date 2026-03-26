@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adminyzr — Implementatieplan v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg2: #0f1318;
+    --bg3: #151a22;
+    --border: #1e2530;
+    --border2: #252d3a;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --accent-dim: rgba(59,130,246,0.12);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.1);
+    --yellow: #eab308;
+    --yellow-dim: rgba(234,179,8,0.1);
+    --red: #ef4444;
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.1);
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Syne', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .layout {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Sidebar */
+  nav {
+    width: 260px;
+    min-height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
+    padding: 0 0 40px;
+    z-index: 100;
+  }
+
+  .nav-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .nav-logo h1 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .nav-logo h1 span { color: var(--accent); }
+
+  .nav-logo p {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  .nav-section {
+    padding: 16px 12px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 1px 8px;
+    border-radius: 6px;
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.15s;
+    font-weight: 400;
+  }
+
+  nav a:hover, nav a.active {
+    background: var(--accent-dim);
+    color: var(--accent2);
+  }
+
+  nav a .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border2);
+    flex-shrink: 0;
+  }
+
+  nav a.active .dot { background: var(--accent); }
+
+  /* Main content */
+  main {
+    margin-left: 260px;
+    flex: 1;
+    padding: 0 48px 80px;
+    max-width: calc(100vw - 260px);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--accent2);
+    font-family: var(--mono);
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-family: var(--display);
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text2);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 28px;
+  }
+
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .hero-meta-item span {
+    color: var(--text2);
+  }
+
+  /* Section */
+  section {
+    margin-bottom: 64px;
+    scroll-margin-top: 24px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    margin-top: 28px;
+  }
+
+  /* Cards grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border2); }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .card h4 {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .card p {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  /* Phase badge */
+  .phase-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .phase-1 { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .phase-2 { background: var(--accent-dim); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+  .phase-3 { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(234,179,8,0.2); }
+  .phase-saas { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(168,85,247,0.2); }
+
+  /* Feature table */
+  .feature-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .feature-table th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--bg3);
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .feature-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+  }
+
+  .feature-table tr:last-child td { border-bottom: none; }
+  .feature-table tr:hover td { background: rgba(255,255,255,0.01); }
+
+  .feature-table td:first-child { color: var(--text); font-weight: 500; }
+
+  .replaces {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--bg3);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* Code block */
+  pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text2);
+    margin: 16px 0;
+  }
+
+  pre .comment { color: var(--text3); }
+  pre .key { color: var(--accent2); }
+  pre .val { color: var(--green); }
+  pre .type { color: var(--purple); }
+  pre .string { color: #f59e0b; }
+
+  /* Stack pills */
+  .stack-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+  }
+
+  .stack-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+  }
+
+  .stack-pill .pill-cat {
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .stack-pill.accent { border-color: rgba(59,130,246,0.3); color: var(--accent2); }
+  .stack-pill.green { border-color: rgba(34,197,94,0.3); color: var(--green); }
+  .stack-pill.purple { border-color: rgba(168,85,247,0.3); color: var(--purple); }
+  .stack-pill.yellow { border-color: rgba(234,179,8,0.3); color: var(--yellow); }
+
+  /* Milestone timeline */
+  .timeline {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border2);
+  }
+
+  .milestone {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .milestone::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border2);
+    border: 2px solid var(--bg);
+  }
+
+  .milestone.done::before { background: var(--green); }
+  .milestone.active::before { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim); }
+
+  .milestone-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .milestone-version {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent2);
+  }
+
+  .milestone-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .milestone-weeks {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  .milestone ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .milestone li {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text3);
+    background: var(--bg3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* Warning block */
+  .notice {
+    display: flex;
+    gap: 12px;
+    background: var(--yellow-dim);
+    border: 1px solid rgba(234,179,8,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .notice-icon { color: var(--yellow); flex-shrink: 0; font-size: 16px; }
+
+  .info {
+    display: flex;
+    gap: 12px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .info-icon { color: var(--accent2); flex-shrink: 0; font-size: 16px; }
+
+  /* Role table */
+  .role-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    font-size: 13px;
+  }
+
+  .role-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent2);
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .role-desc { color: var(--text2); flex: 1; }
+
+  /* OCR Flow */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 20px 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .flow-step {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    min-width: 130px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .flow-step .step-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .flow-step .step-label {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+    display: block;
+  }
+
+  .flow-step .step-sub {
+    font-size: 10px;
+    color: var(--text3);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .flow-arrow {
+    color: var(--text3);
+    padding: 0 8px;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* GitHub labels */
+  .label-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+
+  .label {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid;
+  }
+
+  .label-blue { background: var(--accent-dim); color: var(--accent2); border-color: rgba(59,130,246,0.3); }
+  .label-red { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.3); }
+  .label-green { background: var(--green-dim); color: var(--green); border-color: rgba(34,197,94,0.3); }
+  .label-yellow { background: var(--yellow-dim); color: var(--yellow); border-color: rgba(234,179,8,0.3); }
+  .label-purple { background: var(--purple-dim); color: var(--purple); border-color: rgba(168,85,247,0.3); }
+  .label-gray { background: rgba(100,116,139,0.1); color: var(--text3); border-color: var(--border2); }
+
+  /* Footer */
+  footer {
+    margin-left: 260px;
+    padding: 24px 48px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .table-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  @media (max-width: 900px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 24px; max-width: 100%; }
+    footer { margin-left: 0; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<nav>
+  <div class="nav-logo">
+    <h1>Admin<span>yzr</span></h1>
+    <p>Implementatieplan v1.0</p>
+  </div>
+
+  <div class="nav-section">Overzicht</div>
+  <a href="#vision" class="active"><span class="dot"></span>Productvisie</a>
+  <a href="#features"><span class="dot"></span>Feature Scope</a>
+
+  <div class="nav-section">Architectuur</div>
+  <a href="#stack"><span class="dot"></span>Tech Stack</a>
+  <a href="#multitenancy"><span class="dot"></span>Multi-tenancy</a>
+  <a href="#collections"><span class="dot"></span>Collections</a>
+  <a href="#auth"><span class="dot"></span>Auth & Rollen</a>
+  <a href="#i18n"><span class="dot"></span>i18n</a>
+  <a href="#storage"><span class="dot"></span>Storage</a>
+
+  <div class="nav-section">Features</div>
+  <a href="#ocr"><span class="dot"></span>Factuurherkenning</a>
+  <a href="#pdf"><span class="dot"></span>PDF Generatie</a>
+  <a href="#email"><span class="dot"></span>E-mail</a>
+
+  <div class="nav-section">Ops</div>
+  <a href="#security"><span class="dot"></span>Beveiliging</a>
+  <a href="#monitoring"><span class="dot"></span>Monitoring</a>
+  <a href="#infra"><span class="dot"></span>Infrastructuur</a>
+
+  <div class="nav-section">Project</div>
+  <a href="#github"><span class="dot"></span>GitHub</a>
+  <a href="#claude"><span class="dot"></span>CLAUDE.md</a>
+  <a href="#planning"><span class="dot"></span>Planning</a>
+  <a href="#notes"><span class="dot"></span>Aandachtspunten</a>
+</nav>
+
+<!-- Main -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero" id="vision">
+    <div class="hero-badge">📄 Compass Digital · Implementatieplan</div>
+    <h1>Admin<span>yzr</span><br>Business Platform</h1>
+    <p>Full-stack bedrijfsbeheersysteem gebouwd op Payload CMS + Next.js. Multi-tenant, SaaS-ready, en naadloos integreerbaar met Sityzr.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">Versie <span>1.0</span></div>
+      <div class="hero-meta-item">Stack <span>Next.js 15 + Payload CMS 3</span></div>
+      <div class="hero-meta-item">Infra <span>Hetzner / Ploi</span></div>
+      <div class="hero-meta-item">Status <span>Planning</span></div>
+    </div>
+  </div>
+
+  <!-- Feature Scope -->
+  <section id="features">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Feature Scope</h2>
+    </div>
+
+    <h3>MVP — Fase 1</h3>
+    <div class="table-wrap">
+      <table class="feature-table">
+        <thead>
+          <tr><th>Module</th><th>Functie</th><th>Vervangt</th><th>Fase</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Facturatie</td><td>Verkoopfacturen, PDF, BTW, herinneringen</td><td><span class="replaces">WeFact</span></td><td><span class="phase-badge phase-1">Fase 1</span></td></tr>
+          <tr><td>Inkoopfacturen</td><td>Upload, OCR-herkenning, goedkeuring</td><td><span class="replaces">Exact</span></td><td><span class="phase-badge phase-1">Fase 1</span></td></tr>
+          <tr><td>CRM</td><td>Contacten, bedrijven, notities, geschiedenis</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-1">Fase 1</span></td></tr>
+          <tr><td>Strippenkaarten</td><td>Uren/credits per klant, afboeken, alerts</td><td><span class="replaces">WP Control Room</span></td><td><span class="phase-badge phase-1">Fase 1</span></td></tr>
+          <tr><td>Urenregistratie</td><td>Tijdregistratie per project/klant</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-1">Fase 1</span></td></tr>
+          <tr><td>Offertes</td><td>Offerte → Factuur workflow</td><td><span class="replaces">WeFact</span></td><td><span class="phase-badge phase-1">Fase 1</span></td></tr>
+          <tr><td>Projecten</td><td>Kanban, milestones, koppeling facturatie</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-2">Fase 2</span></td></tr>
+          <tr><td>Abonnementen/MRR</td><td>Recurring billing, dunning, upgrades</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-2">Fase 2</span></td></tr>
+          <tr><td>BTW-rapportage</td><td>Kwartaal export, omzet dashboards</td><td><span class="replaces">Exact</span></td><td><span class="phase-badge phase-2">Fase 2</span></td></tr>
+          <tr><td>Klantportaal</td><td>Self-service: facturen, offertes accorderen</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-2">Fase 2</span></td></tr>
+          <tr><td>Salarisadministratie</td><td>Loonstroken, loonjournaal</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-saas">Fase 3</span></td></tr>
+          <tr><td>Personeelsbeheer</td><td>Contracten, verlof, onboarding</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-saas">Fase 3</span></td></tr>
+          <tr><td>Sityzr integratie</td><td>White-label module binnen Sityzr tenants</td><td><span class="replaces">—</span></td><td><span class="phase-badge phase-saas">Fase 3</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Stack -->
+  <section id="stack">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>Tech Stack</h2>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-pill accent"><span class="pill-cat">Frontend</span> Next.js 15</div>
+      <div class="stack-pill accent"><span class="pill-cat">CMS</span> Payload CMS 3.x</div>
+      <div class="stack-pill accent"><span class="pill-cat">DB</span> PostgreSQL</div>
+      <div class="stack-pill accent"><span class="pill-cat">ORM</span> Drizzle / Prisma</div>
+      <div class="stack-pill green"><span class="pill-cat">Cache</span> Redis</div>
+      <div class="stack-pill green"><span class="pill-cat">Queue</span> BullMQ</div>
+      <div class="stack-pill green"><span class="pill-cat">Storage</span> Cloudflare R2</div>
+      <div class="stack-pill green"><span class="pill-cat">Mail</span> Amazon SES</div>
+      <div class="stack-pill yellow"><span class="pill-cat">OCR</span> Mindee / AWS Textract</div>
+      <div class="stack-pill yellow"><span class="pill-cat">PDF</span> Puppeteer</div>
+      <div class="stack-pill yellow"><span class="pill-cat">i18n</span> next-intl</div>
+      <div class="stack-pill purple"><span class="pill-cat">Errors</span> Sentry</div>
+      <div class="stack-pill purple"><span class="pill-cat">Logs</span> Axiom</div>
+      <div class="stack-pill purple"><span class="pill-cat">CI/CD</span> GitHub Actions</div>
+      <div class="stack-pill purple"><span class="pill-cat">Infra</span> Hetzner / Ploi</div>
+      <div class="stack-pill purple"><span class="pill-cat">Proxy</span> Caddy</div>
+    </div>
+
+    <div class="info">
+      <span class="info-icon">💡</span>
+      <div>Payload CMS 3.x draait native binnen Next.js App Router — geen aparte backend service nodig. Eén codebase, één deployment, één Docker container voor app + CMS.</div>
+    </div>
+  </section>
+
+  <!-- Multi-tenancy -->
+  <section id="multitenancy">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Multi-tenancy</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-label">Strategie</div>
+        <h4>Row-Level Security (RLS)</h4>
+        <p>PostgreSQL RLS met schema isolation per tenant. Elke query heeft verplicht een <code>tenant_id</code>. Middleware injecteert de tenant context automatisch.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Domeinen</div>
+        <h4>Subdomain routing</h4>
+        <p><code>*.adminyzr.io</code> → tenant subdomains. Custom domeinen mogelijk via Cloudflare CNAME. White-label voor Sityzr: <code>admin.klant.nl</code></p>
+      </div>
+    </div>
+
+    <pre><code><span class="comment">// Tenant hiërarchie</span>
+<span class="type">Organization</span> (tenant)
+  ├── <span class="type">Users</span>         <span class="comment">// rollen: owner, admin, accountant, medewerker, viewer</span>
+  ├── <span class="type">Clients</span>       <span class="comment">// CRM: bedrijven + contactpersonen</span>
+  ├── <span class="type">Invoices</span>      <span class="comment">// verkoopfacturen</span>
+  ├── <span class="type">PurchaseInv</span>   <span class="comment">// inkoopfacturen</span>
+  ├── <span class="type">Projects</span>      <span class="comment">// projecten + milestones</span>
+  ├── <span class="type">TimeEntries</span>   <span class="comment">// urenregistratie</span>
+  ├── <span class="type">PunchCards</span>    <span class="comment">// strippenkaarten</span>
+  └── <span class="type">Settings</span>      <span class="comment">// branding, BTW, IBAN, factuurtemplate</span></code></pre>
+  </section>
+
+  <!-- Auth -->
+  <section id="auth">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>Auth & Rollen</h2>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Auth Stack</h3>
+        <div class="stack-grid">
+          <div class="stack-pill accent">JWT + Refresh Tokens</div>
+          <div class="stack-pill green">Magic Link Login</div>
+          <div class="stack-pill yellow">TOTP 2FA</div>
+          <div class="stack-pill purple">API Keys (M2M)</div>
+        </div>
+        <div class="notice">
+          <span class="notice-icon">⚠️</span>
+          <div>SSO via Google/Microsoft in fase 2. Magic link is ideaal voor klantportaal — geen wachtwoord nodig.</div>
+        </div>
+      </div>
+      <div>
+        <h3>Rollen</h3>
+        <div class="role-row"><span class="role-name">owner</span><span class="role-desc">Alles, incl. billing en gebruikersbeheer</span></div>
+        <div class="role-row"><span class="role-name">admin</span><span class="role-desc">Alles behalve billing</span></div>
+        <div class="role-row"><span class="role-name">accountant</span><span class="role-desc">Facturen, rapporten (lezen + schrijven)</span></div>
+        <div class="role-row"><span class="role-name">medewerker</span><span class="role-desc">Urenregistratie, eigen projecten</span></div>
+        <div class="role-row"><span class="role-name">viewer</span><span class="role-desc">Read-only toegang</span></div>
+        <div class="role-row" style="border:none"><span class="role-name">client</span><span class="role-desc">Klantportaal: eigen facturen/offertes</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- i18n -->
+  <section id="i18n">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>Internationalisation</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-label">Library</div>
+        <h4>next-intl</h4>
+        <p>URL-based routing: <code>/nl/dashboard</code>, <code>/en/dashboard</code>. NL als default locale.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Locales</div>
+        <h4>NL · EN · DE · FR</h4>
+        <p>UI strings, factuurtemplate taal per klant instelbaar. Datumnotaties en valuta per locale.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Scope</div>
+        <h4>End-to-end</h4>
+        <p>UI, e-mailtemplates, PDF facturen, foutmeldingen — alles vertaalbaar via JSON bestanden.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OCR -->
+  <section id="ocr">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2>Factuurherkenning (OCR)</h2>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <span class="step-num">01</span>
+        <span class="step-label">Upload</span>
+        <span class="step-sub">PDF / afbeelding</span>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">
+        <span class="step-num">02</span>
+        <span class="step-label">R2 Storage</span>
+        <span class="step-sub">Opslaan</span>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">
+        <span class="step-num">03</span>
+        <span class="step-label">BullMQ Job</span>
+        <span class="step-sub">Queue worker</span>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">
+        <span class="step-num">04</span>
+        <span class="step-label">Mindee API</span>
+        <span class="step-sub">OCR extractie</span>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">
+        <span class="step-num">05</span>
+        <span class="step-label">Confidence</span>
+        <span class="step-sub">Score check</span>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">
+        <span class="step-num">06</span>
+        <span class="step-label">Review</span>
+        <span class="step-sub">Goedkeuring</span>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px">
+      <div class="card" style="border-color: rgba(34,197,94,0.2)">
+        <div class="card-label" style="color: var(--green)">Confidence &gt; 90%</div>
+        <h4>Auto-fill</h4>
+        <p>Formulier automatisch ingevuld. Menselijke goedkeuring vereist voor akkoord.</p>
+      </div>
+      <div class="card" style="border-color: rgba(234,179,8,0.2)">
+        <div class="card-label" style="color: var(--yellow)">Confidence 60–90%</div>
+        <h4>Suggesties</h4>
+        <p>Velden worden gesuggereerd met highlight. Handmatige review + correctie.</p>
+      </div>
+      <div class="card" style="border-color: rgba(239,68,68,0.2)">
+        <div class="card-label" style="color: var(--red)">Confidence &lt; 60%</div>
+        <h4>Handmatig</h4>
+        <p>OCR als hint, volledig handmatige invoer. Factuur blijft zichtbaar naast formulier.</p>
+      </div>
+    </div>
+
+    <div class="info" style="margin-top:16px">
+      <span class="info-icon">💡</span>
+      <div><strong>Aanbeveling MVP:</strong> Start met <strong>Mindee API</strong> (goedkoper, sneller integreren, goede NL factuur support). Later uitbreiden naar AWS Textract voor hogere volumes.</div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section id="security">
+    <div class="section-header">
+      <span class="section-num">11</span>
+      <h2>Beveiliging</h2>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Transport & API</h3>
+        <ul class="checklist">
+          <li><div class="check-box"></div>HTTPS everywhere — Let's Encrypt via Caddy</li>
+          <li><div class="check-box"></div>HSTS + CSP headers</li>
+          <li><div class="check-box"></div>Rate limiting op auth endpoints (Redis)</li>
+          <li><div class="check-box"></div>JWT short-lived (15 min access / 7 dagen refresh)</li>
+          <li><div class="check-box"></div>CORS whitelist per tenant</li>
+          <li><div class="check-box"></div>API keys hashed (bcrypt)</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Data & Compliance</h3>
+        <ul class="checklist">
+          <li><div class="check-box"></div>Payload RLS — tenant isolation op DB niveau</li>
+          <li><div class="check-box"></div>Soft deletes — geen data permanent verwijderd</li>
+          <li><div class="check-box"></div>Audit log — elke mutatie gelogd (wie, wat, wanneer)</li>
+          <li><div class="check-box"></div>GDPR — data export + verwijderrecht</li>
+          <li><div class="check-box"></div>BTW-wet — facturen onveranderbaar na versturen</li>
+          <li><div class="check-box"></div>AVG-proof logging — geen PII in logs</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Monitoring -->
+  <section id="monitoring">
+    <div class="section-header">
+      <span class="section-num">12</span>
+      <h2>Monitoring & Observability</h2>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-label">Errors</div>
+        <h4>Sentry</h4>
+        <p>Frontend + backend, per environment. Source maps, performance traces, release tracking.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Logs</div>
+        <h4>Axiom</h4>
+        <p>Structured JSON logging. BullMQ job logs, API request logs, mail delivery logs.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Uptime</div>
+        <h4>Better Uptime</h4>
+        <p>HTTP monitoring, SSL check, status page voor klanten. Alerting via SMS + Slack.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Queue</div>
+        <h4>BullMQ Board</h4>
+        <p>Web UI voor job monitoring. Inzicht in PDF, OCR en mail jobs. Retry failed jobs.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Analytics</div>
+        <h4>Plausible</h4>
+        <p>Privacy-first, self-hosted. Geen cookies, GDPR-compliant pageview tracking.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Database</div>
+        <h4>pg_stat</h4>
+        <p>pg_stat_statements voor slow query logging. Geïntegreerd in Ploi monitoring dashboard.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Infra -->
+  <section id="infra">
+    <div class="section-header">
+      <span class="section-num">13</span>
+      <h2>Infrastructuur</h2>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Productie (Hetzner)</h3>
+        <pre><code><span class="comment"># app-adminyzr-01</span>
+<span class="key">Type:</span>    <span class="val">CX31 (4 vCPU, 8GB RAM)</span>
+<span class="key">Role:</span>    <span class="val">Next.js + Payload CMS</span>
+<span class="key">Proxy:</span>   <span class="val">Caddy (HTTPS auto)</span>
+
+<span class="comment"># db-adminyzr-01</span>
+<span class="key">Type:</span>    <span class="val">CPX21 (3 vCPU, 4GB RAM)</span>
+<span class="key">Role:</span>    <span class="val">PostgreSQL 16</span>
+
+<span class="comment"># redis-adminyzr-01</span>
+<span class="key">Type:</span>    <span class="val">CX11 (2 vCPU, 2GB RAM)</span>
+<span class="key">Role:</span>    <span class="val">Redis + BullMQ workers</span></code></pre>
+      </div>
+      <div>
+        <h3>CI/CD Pipeline</h3>
+        <pre><code><span class="comment"># GitHub Actions → Ploi</span>
+
+<span class="key">on push main:</span>
+  <span class="val">1. ESLint + TypeScript check</span>
+  <span class="val">2. Vitest unit tests</span>
+  <span class="val">3. Playwright e2e (kritieke flows)</span>
+  <span class="val">4. Docker build + push GHCR</span>
+  <span class="val">5. Ploi webhook trigger</span>
+  <span class="val">6. Pull + rolling restart</span>
+  <span class="val">7. Sentry release tag</span>
+  <span class="val">8. Smoke test</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub -->
+  <section id="github">
+    <div class="section-header">
+      <span class="section-num">14</span>
+      <h2>GitHub Project</h2>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Issue Labels — Type</h3>
+        <div class="label-grid">
+          <span class="label label-blue">type: feature</span>
+          <span class="label label-red">type: bug</span>
+          <span class="label label-red">type: security</span>
+          <span class="label label-yellow">type: performance</span>
+          <span class="label label-gray">type: docs</span>
+        </div>
+
+        <h3>Issue Labels — Module</h3>
+        <div class="label-grid">
+          <span class="label label-blue">module: facturatie</span>
+          <span class="label label-blue">module: crm</span>
+          <span class="label label-blue">module: ocr</span>
+          <span class="label label-blue">module: auth</span>
+          <span class="label label-blue">module: i18n</span>
+          <span class="label label-blue">module: infra</span>
+        </div>
+
+        <h3>Issue Labels — Priority</h3>
+        <div class="label-grid">
+          <span class="label label-red">priority: critical</span>
+          <span class="label label-yellow">priority: high</span>
+          <span class="label label-green">priority: medium</span>
+          <span class="label label-gray">priority: low</span>
+        </div>
+      </div>
+      <div>
+        <h3>Repo Structuur</h3>
+        <pre style="font-size:11px"><code><span class="key">adminyzr/</span>
+├── <span class="val">src/</span>
+│   ├── <span class="string">app/</span>           <span class="comment"># Next.js App Router</span>
+│   │   ├── <span class="string">(admin)/</span>   <span class="comment"># Dashboard</span>
+│   │   ├── <span class="string">(auth)/</span>    <span class="comment"># Login</span>
+│   │   ├── <span class="string">(portal)/</span>  <span class="comment"># Klantportaal</span>
+│   │   └── <span class="string">api/</span>       <span class="comment"># Webhooks</span>
+│   ├── <span class="string">payload/</span>
+│   │   ├── <span class="string">collections/</span>
+│   │   ├── <span class="string">globals/</span>
+│   │   └── <span class="string">plugins/</span>
+│   ├── <span class="string">workers/</span>       <span class="comment"># BullMQ</span>
+│   ├── <span class="string">emails/</span>        <span class="comment"># React Email</span>
+│   └── <span class="string">i18n/</span>
+├── <span class="string">messages/</span>        <span class="comment"># nl/en/de/fr</span>
+├── <span class="string">tests/</span>
+├── <span class="string">.github/workflows/</span>
+├── <span class="string">CLAUDE.md</span>
+└── <span class="string">docker-compose.yml</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Planning -->
+  <section id="planning">
+    <div class="section-header">
+      <span class="section-num">16</span>
+      <h2>Planning & Milestones</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="milestone active">
+        <div class="milestone-header">
+          <span class="milestone-version">v0.1</span>
+          <span class="milestone-title">Foundation</span>
+          <span class="milestone-weeks">4 weken</span>
+        </div>
+        <ul>
+          <li>Repo + Docker + CI/CD</li>
+          <li>Payload CMS + PostgreSQL</li>
+          <li>Multi-tenancy (RLS)</li>
+          <li>Auth + 2FA + rollen</li>
+          <li>Dashboard UI shell</li>
+          <li>i18n setup (NL+EN)</li>
+          <li>Sentry + monitoring</li>
+        </ul>
+      </div>
+
+      <div class="milestone">
+        <div class="milestone-header">
+          <span class="milestone-version">v0.2</span>
+          <span class="milestone-title">Facturatie MVP</span>
+          <span class="milestone-weeks">3 weken</span>
+        </div>
+        <ul>
+          <li>CRM basis</li>
+          <li>Producten catalogus</li>
+          <li>Verkoopfacturen CRUD</li>
+          <li>PDF (Puppeteer)</li>
+          <li>R2 storage</li>
+          <li>Factuur versturen via SES</li>
+          <li>Betalingsherinneringen</li>
+        </ul>
+      </div>
+
+      <div class="milestone">
+        <div class="milestone-header">
+          <span class="milestone-version">v0.3–v0.5</span>
+          <span class="milestone-title">Uitbreiding</span>
+          <span class="milestone-weeks">4 weken</span>
+        </div>
+        <ul>
+          <li>Inkoopfacturen + OCR</li>
+          <li>Offertes workflow</li>
+          <li>Urenregistratie</li>
+          <li>Strippenkaarten</li>
+          <li>BTW-export</li>
+        </ul>
+      </div>
+
+      <div class="milestone">
+        <div class="milestone-header">
+          <span class="milestone-version">v1.0</span>
+          <span class="milestone-title">Launch</span>
+          <span class="milestone-weeks">3 weken</span>
+        </div>
+        <ul>
+          <li>Productierijp</li>
+          <li>i18n NL/EN compleet</li>
+          <li>Klantportaal</li>
+          <li>Rapportage dashboards</li>
+          <li>Documentatie</li>
+        </ul>
+      </div>
+
+      <div class="milestone">
+        <div class="milestone-header">
+          <span class="milestone-version">v2.0</span>
+          <span class="milestone-title">SaaS Launch</span>
+          <span class="milestone-weeks">3 weken</span>
+        </div>
+        <ul>
+          <li>Publieke onboarding</li>
+          <li>Stripe billing</li>
+          <li>Sityzr white-label integratie</li>
+          <li>Marketing site</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Notes -->
+  <section id="notes">
+    <div class="section-header">
+      <span class="section-num">17</span>
+      <h2>Aandachtspunten</h2>
+    </div>
+
+    <div class="notice">
+      <span class="notice-icon">⚖️</span>
+      <div><strong>BTW-wetgeving:</strong> Facturen zijn juridische documenten — na versturen niet meer muteren. Alleen creditnota's toestaan. Nummering mag geen gaten hebben.</div>
+    </div>
+    <div class="notice">
+      <span class="notice-icon">🏦</span>
+      <div><strong>IBAN-validatie:</strong> Valideer IBAN bij inkoopfacturen. Phishing via valse facturen met gewijzigd IBAN is een reëel risico bij zakelijke betalingen.</div>
+    </div>
+    <div class="notice">
+      <span class="notice-icon">👁️</span>
+      <div><strong>OCR review:</strong> Altijd menselijke goedkeuring voor inkoopfacturen boven een instelbaar bedrag. Nooit volledig automatisch betaalbaar maken.</div>
+    </div>
+    <div class="info">
+      <span class="info-icon">📊</span>
+      <div><strong>Boekhoudkoppeling:</strong> Vraag je accountant welk format hij nodig heeft voor de BTW-aangifte. CSV/CAMT.053 of directe Snelstart/Twinfield koppeling?</div>
+    </div>
+    <div class="info">
+      <span class="info-icon">💼</span>
+      <div><strong>Salarisadministratie:</strong> Zeer complex (loonheffing, pensioen, Belastingdienst). Overweeg integratie via <strong>Nmbrs API</strong> in plaats van zelf bouwen.</div>
+    </div>
+    <div class="info">
+      <span class="info-icon">🎫</span>
+      <div><strong>Strippenkaarten:</strong> Definieer eenheden flexibel (uren, credits, taken, API-calls). Belangrijk voor hergebruik als SaaS module voor andere sectoren.</div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<footer>
+  <span>Adminyzr · Implementatieplan v1.0 · Compass Digital</span>
+  <span>Mark Kokkelkoren · compassdigital.nl</span>
+</footer>
+
+</body>
+</html>
