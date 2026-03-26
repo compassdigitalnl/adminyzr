@@ -1,5 +1,5 @@
 import type { CollectionBeforeValidateHook } from 'payload'
-import { validateIBAN } from '@/lib/validation/iban'
+import { validateIBAN } from '../../lib/validation/iban'
 
 /**
  * Valideert IBAN velden voordat data wordt opgeslagen.

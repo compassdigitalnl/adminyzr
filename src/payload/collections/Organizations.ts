@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
-import { isAdmin, isOwner } from '@/payload/access/isAdmin'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
-import { validateIban } from '@/payload/hooks/validateIban'
+import { isAdmin, isOwner } from '../access/isAdmin'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
+import { validateIban } from '../hooks/validateIban'
 
 export const Organizations: CollectionConfig = {
   slug: 'organizations',
@@ -14,7 +14,7 @@ export const Organizations: CollectionConfig = {
     read: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'owner') return true
-      const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+      const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
       return { id: { equals: orgId } }
     },
     // Alleen via seeding/admin — niet via gewone gebruikers

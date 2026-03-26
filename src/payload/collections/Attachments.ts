@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
-import { isAuthenticated } from '@/payload/access/isAuthenticated'
-import { hasRole } from '@/payload/access/hasRole'
-import { setOrganization } from '@/payload/hooks/setOrganization'
+import { isAuthenticated } from '../access/isAuthenticated'
+import { hasRole } from '../access/hasRole'
+import { setOrganization } from '../hooks/setOrganization'
 
 export const Attachments: CollectionConfig = {
   slug: 'attachments',

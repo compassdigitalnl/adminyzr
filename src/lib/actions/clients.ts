@@ -38,7 +38,7 @@ export async function getClients(params?: {
   const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
   if (!user) throw new Error('Niet ingelogd')
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   const conditions: Where[] = [
     { organization: { equals: orgId } },
@@ -90,7 +90,7 @@ export async function createClient(data: ClientFormData) {
   const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
   if (!user) throw new Error('Niet ingelogd')
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   const result = await payload.create({
     collection: 'clients',

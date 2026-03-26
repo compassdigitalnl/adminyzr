@@ -25,7 +25,7 @@ export async function GET(
     return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
   }
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   try {
     // Fetch invoice

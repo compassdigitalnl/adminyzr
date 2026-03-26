@@ -38,7 +38,7 @@ export async function getInvoices(params?: {
   const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
   if (!user) throw new Error('Niet ingelogd')
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   const conditions: Where[] = [
     { organization: { equals: orgId } },
@@ -139,7 +139,7 @@ export async function createInvoice(data: InvoiceFormData) {
   const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
   if (!user) throw new Error('Niet ingelogd')
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
   if (!orgId) throw new Error('Geen organisatie gevonden')
 
   const invoiceNumber = await generateInvoiceNumber(payload, orgId as string)
@@ -236,7 +236,7 @@ export async function getDashboardStats() {
   const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
   if (!user) throw new Error('Niet ingelogd')
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   const baseWhere: Where = {
     and: [

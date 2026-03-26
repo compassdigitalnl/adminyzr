@@ -1,8 +1,8 @@
 import type { CollectionConfig, Where } from 'payload'
-import { tenantIsolation } from '@/payload/access/tenantIsolation'
-import { hasRoleInTenant } from '@/payload/access/hasRole'
-import { setOrganization } from '@/payload/hooks/setOrganization'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+import { tenantIsolation } from '../access/tenantIsolation'
+import { hasRoleInTenant } from '../access/hasRole'
+import { setOrganization } from '../hooks/setOrganization'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
 
 export const TimeEntries: CollectionConfig = {
   slug: 'time-entries',
@@ -14,7 +14,7 @@ export const TimeEntries: CollectionConfig = {
     read: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'owner') return true
-      const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+      const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
       if (['admin', 'accountant'].includes(user.role as string)) {
         return { organization: { equals: orgId } } as Where
       }

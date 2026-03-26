@@ -1,5 +1,5 @@
 import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
-import { getOrganizationId } from '@/lib/tenant'
+import { getOrganizationId } from '../../lib/tenant'
 
 /**
  * Logt create/update operaties naar de AuditLog collection.

@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
-import { tenantIsolation } from '@/payload/access/tenantIsolation'
-import { hasRoleInTenant } from '@/payload/access/hasRole'
-import { setOrganization } from '@/payload/hooks/setOrganization'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
-import { preventMutationAfterSend } from '@/payload/hooks/preventMutationAfterSend'
+import { tenantIsolation } from '../access/tenantIsolation'
+import { hasRoleInTenant } from '../access/hasRole'
+import { setOrganization } from '../hooks/setOrganization'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
+import { preventMutationAfterSend } from '../hooks/preventMutationAfterSend'
 
 export const Invoices: CollectionConfig = {
   slug: 'invoices',

@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
-import { tenantIsolation } from '@/payload/access/tenantIsolation'
-import { hasRoleInTenant } from '@/payload/access/hasRole'
-import { setOrganization } from '@/payload/hooks/setOrganization'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
-import { validateIban } from '@/payload/hooks/validateIban'
+import { tenantIsolation } from '../access/tenantIsolation'
+import { hasRoleInTenant } from '../access/hasRole'
+import { setOrganization } from '../hooks/setOrganization'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
+import { validateIban } from '../hooks/validateIban'
 
 export const PurchaseInvoices: CollectionConfig = {
   slug: 'purchase-invoices',

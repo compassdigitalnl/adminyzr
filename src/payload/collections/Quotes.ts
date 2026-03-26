@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload'
-import { tenantIsolation } from '@/payload/access/tenantIsolation'
-import { hasRoleInTenant } from '@/payload/access/hasRole'
-import { setOrganization } from '@/payload/hooks/setOrganization'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+import { tenantIsolation } from '../access/tenantIsolation'
+import { hasRoleInTenant } from '../access/hasRole'
+import { setOrganization } from '../hooks/setOrganization'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
 
 export const Quotes: CollectionConfig = {
   slug: 'quotes',

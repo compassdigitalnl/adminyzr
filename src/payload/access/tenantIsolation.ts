@@ -11,7 +11,7 @@ export const tenantIsolation: Access = ({ req: { user } }) => {
   // voor debugging. In de frontend is het altijd gefilterd.
   if (user.role === 'owner') return true
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   if (!orgId) return false
 
@@ -30,7 +30,7 @@ export const tenantIsolationOptional: Access = ({ req: { user } }) => {
 
   if (user.role === 'owner') return true
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
 
   if (!orgId) return false
 

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 3600",
     "build": "next build",
-    "start": "next start -p 3061",
+    "start": "next start -p 3062",
     "lint": "next lint",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",

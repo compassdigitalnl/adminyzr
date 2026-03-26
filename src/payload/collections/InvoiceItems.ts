@@ -1,9 +1,9 @@
 import type { CollectionConfig } from 'payload'
-import { isAuthenticated } from '@/payload/access/isAuthenticated'
-import { hasRole } from '@/payload/access/hasRole'
-import { calculateLineTotal } from '@/payload/hooks/calculateLineTotal'
-import { recalculateInvoiceAfterItemChange, recalculateInvoiceAfterItemDelete } from '@/payload/hooks/recalculateInvoiceTotals'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+import { isAuthenticated } from '../access/isAuthenticated'
+import { hasRole } from '../access/hasRole'
+import { calculateLineTotal } from '../hooks/calculateLineTotal'
+import { recalculateInvoiceAfterItemChange, recalculateInvoiceAfterItemDelete } from '../hooks/recalculateInvoiceTotals'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
 
 export const InvoiceItems: CollectionConfig = {
   slug: 'invoice-items',

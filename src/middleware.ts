@@ -44,7 +44,7 @@ export function middleware(request: NextRequest) {
     : pathname
 
   // Public paths: geen auth check nodig
-  if (pathWithoutLocale === '/' || isPublicPath(pathWithoutLocale)) {
+  if (isPublicPath(pathWithoutLocale)) {
     return NextResponse.next()
   }
 

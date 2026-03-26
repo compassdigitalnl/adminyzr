@@ -29,7 +29,7 @@ async function getAuthUser() {
   const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
   if (!user) throw new Error('Niet ingelogd')
 
-  const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
   if (!orgId) throw new Error('Geen organisatie gevonden')
 
   return { payload, user, orgId: orgId as string }

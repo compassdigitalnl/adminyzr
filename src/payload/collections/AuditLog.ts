@@ -14,7 +14,7 @@ export const AuditLog: CollectionConfig = {
 
       if (user.role === 'owner') return true
 
-      const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+      const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
       return {
         or: [
           { organization: { equals: orgId } },

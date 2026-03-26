@@ -21,7 +21,7 @@ export const hasRoleInTenant = (...roles: Role[]): Access => {
     if (!user) return false
     if (!roles.includes(user.role as Role)) return false
 
-    const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+    const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
     if (!orgId) return false
 
     return {

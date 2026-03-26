@@ -1,6 +1,28 @@
-import type { CollectionConfig, Where } from 'payload'
-import { isAdmin } from '@/payload/access/isAdmin'
-import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+import type { CollectionConfig, CollectionBeforeChangeHook, Where } from 'payload'
+import { isAdmin } from '../access/isAdmin'
+import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
+
+/**
+ * Als er nog geen users bestaan, maak de eerste user automatisch owner.
+ */
+const setFirstUserAsOwner: CollectionBeforeChangeHook = async ({
+  data,
+  req,
+  operation,
+}) => {
+  if (operation !== 'create') return data
+
+  const { totalDocs } = await req.payload.count({
+    collection: 'users',
+    req,
+  })
+
+  if (totalDocs === 0) {
+    data.role = 'owner'
+  }
+
+  return data
+}
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -13,15 +35,22 @@ export const Users: CollectionConfig = {
     read: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'owner') return true
-      const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+      const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
       if (user.role === 'admin') return { organization: { equals: orgId } } as Where
       return { id: { equals: user.id } } as Where
     },
-    create: isAdmin,
+    create: async ({ req }) => {
+      // Allow first user creation when no users exist
+      if (!req.user) {
+        const { totalDocs } = await req.payload.count({ collection: 'users' })
+        return totalDocs === 0
+      }
+      return req.user.role === 'owner' || req.user.role === 'admin'
+    },
     update: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'owner') return true
-      const orgId = typeof user.organization === 'object' ? user.organization.id : user.organization
+      const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
       if (user.role === 'admin') return { organization: { equals: orgId } } as Where
       return { id: { equals: user.id } } as Where
     },
@@ -31,6 +60,7 @@ export const Users: CollectionConfig = {
     },
   },
   hooks: {
+    beforeChange: [setFirstUserAsOwner],
     afterChange: [logAfterChange],
     afterDelete: [logAfterDelete],
   },
@@ -38,7 +68,6 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
-      required: true,
     },
     {
       name: 'role',
@@ -57,7 +86,6 @@ export const Users: CollectionConfig = {
       name: 'organization',
       type: 'relationship',
       relationTo: 'organizations',
-      required: true,
       admin: {
         description: 'De organisatie (tenant) waar deze gebruiker bij hoort.',
       },

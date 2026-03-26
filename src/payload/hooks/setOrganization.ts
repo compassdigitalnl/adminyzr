@@ -1,5 +1,5 @@
 import type { CollectionBeforeValidateHook } from 'payload'
-import { getOrganizationId } from '@/lib/tenant'
+import { getOrganizationId } from '../../lib/tenant'
 
 /**
  * Zet automatisch de organization op basis van de ingelogde gebruiker.
