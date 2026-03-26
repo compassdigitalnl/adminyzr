@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { getPayloadClient } from '@/lib/get-payload'
 import { InvoicePdf, type InvoicePdfData } from '@/lib/pdf/invoice-template'
+import { uploadToR2 } from '@/lib/storage/r2'
 import React from 'react'
 
 export async function GET(
@@ -109,10 +110,28 @@ export async function GET(
     // Render PDF
     // eslint-disable-next-line
     const buffer = await renderToBuffer(React.createElement(InvoicePdf, { data: pdfData }) as any)
-
+    const pdfBuffer = Buffer.from(buffer)
     const filename = `${pdfData.invoiceNumber || 'factuur'}.pdf`
 
-    return new NextResponse(Buffer.from(buffer) as unknown as BodyInit, {
+    // Upload to R2 and cache the URL on the invoice
+    try {
+      const r2Key = `invoices/${orgId}/${id}/${filename}`
+      await uploadToR2(r2Key, pdfBuffer, 'application/pdf')
+
+      // Store the R2 key on the invoice for future reference
+      if (!invoice.pdfUrl) {
+        await payload.update({
+          collection: 'invoices',
+          id,
+          data: { pdfUrl: r2Key },
+        })
+      }
+    } catch (r2Err) {
+      // R2 upload failure shouldn't block PDF download
+      console.error('R2 upload failed (non-blocking):', r2Err)
+    }
+
+    return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,

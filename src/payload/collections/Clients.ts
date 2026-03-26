@@ -99,6 +99,16 @@ export const Clients: CollectionConfig = {
       ],
     },
     {
+      name: 'portalToken',
+      type: 'text',
+      admin: { hidden: true },
+    },
+    {
+      name: 'portalTokenExpiry',
+      type: 'date',
+      admin: { hidden: true },
+    },
+    {
       name: 'deletedAt',
       type: 'date',
       admin: { position: 'sidebar', readOnly: true },

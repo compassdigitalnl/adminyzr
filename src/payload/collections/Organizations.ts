@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin, isOwner } from '@/payload/access/isAdmin'
 import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+import { validateIban } from '@/payload/hooks/validateIban'
 
 export const Organizations: CollectionConfig = {
   slug: 'organizations',
@@ -24,6 +25,7 @@ export const Organizations: CollectionConfig = {
     delete: isOwner,
   },
   hooks: {
+    beforeValidate: [validateIban],
     afterChange: [logAfterChange],
     afterDelete: [logAfterDelete],
   },
@@ -130,6 +132,35 @@ export const Organizations: CollectionConfig = {
           admin: { description: 'Tekst onderaan factuur (bijv. bankgegevens, voorwaarden)' },
         },
       ],
+    },
+    // Stripe billing fields
+    {
+      name: 'stripeCustomerId',
+      type: 'text',
+      admin: { hidden: true },
+    },
+    {
+      name: 'subscriptionId',
+      type: 'text',
+      admin: { hidden: true },
+    },
+    {
+      name: 'subscriptionStatus',
+      type: 'select',
+      defaultValue: 'none',
+      options: [
+        { label: 'Active', value: 'active' },
+        { label: 'Trialing', value: 'trialing' },
+        { label: 'Past Due', value: 'past_due' },
+        { label: 'Canceled', value: 'canceled' },
+        { label: 'None', value: 'none' },
+      ],
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'subscriptionPlan',
+      type: 'text',
+      admin: { readOnly: true, position: 'sidebar' },
     },
     {
       name: 'deletedAt',

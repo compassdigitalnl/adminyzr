@@ -3,6 +3,7 @@ import { tenantIsolation } from '@/payload/access/tenantIsolation'
 import { hasRoleInTenant } from '@/payload/access/hasRole'
 import { setOrganization } from '@/payload/hooks/setOrganization'
 import { logAfterChange, logAfterDelete } from '@/payload/hooks/auditLog'
+import { validateIban } from '@/payload/hooks/validateIban'
 
 export const PurchaseInvoices: CollectionConfig = {
   slug: 'purchase-invoices',
@@ -17,7 +18,7 @@ export const PurchaseInvoices: CollectionConfig = {
     delete: hasRoleInTenant('owner', 'admin'),
   },
   hooks: {
-    beforeValidate: [setOrganization],
+    beforeValidate: [setOrganization, validateIban],
     afterChange: [logAfterChange],
     afterDelete: [logAfterDelete],
   },

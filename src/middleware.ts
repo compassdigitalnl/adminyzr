@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { locales, defaultLocale } from '@/i18n/config'
 
-const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password']
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/portal']
 
 function isPublicPath(pathWithoutLocale: string): boolean {
   return PUBLIC_PATHS.some((p) => pathWithoutLocale.startsWith(p))
