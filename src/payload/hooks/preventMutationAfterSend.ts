@@ -17,12 +17,24 @@ export const preventMutationAfterSend: CollectionBeforeChangeHook = async ({
   // Alleen blokkeren als factuur al verstuurd is
   if (!originalDoc.sentAt) return data
 
-  // Check of er velden gewijzigd worden die niet mogen
+  // Check of er velden daadwerkelijk gewijzigd worden die niet mogen
   if (!data) return data
 
-  const mutatedFields = Object.keys(data).filter(
-    (key) => !ALLOWED_FIELDS_AFTER_SEND.includes(key)
-  )
+  const mutatedFields = Object.keys(data).filter((key) => {
+    // Allowed fields mogen altijd gewijzigd worden
+    if (ALLOWED_FIELDS_AFTER_SEND.includes(key)) return false
+
+    // Check of de waarde daadwerkelijk gewijzigd is
+    const oldVal = originalDoc[key]
+    const newVal = data[key]
+
+    // Vergelijk als JSON voor objecten/arrays, anders directe vergelijking
+    if (typeof oldVal === 'object' && oldVal !== null) {
+      return JSON.stringify(oldVal) !== JSON.stringify(newVal)
+    }
+
+    return oldVal !== newVal
+  })
 
   if (mutatedFields.length > 0) {
     throw new Error(

@@ -43,6 +43,7 @@ type PurchaseInvoiceFormProps = {
     subtotal?: number
     vatAmount?: number
     totalIncVat?: number
+    currency?: string
     category?: string
     notes?: string
   }
@@ -72,6 +73,7 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
   const [totalIncVat, setTotalIncVat] = useState(
     editData?.totalIncVat ? (editData.totalIncVat / 100).toFixed(2) : ''
   )
+  const [currency, setCurrency] = useState(editData?.currency || 'EUR')
   const [category, setCategory] = useState(editData?.category || 'other')
   const [notes, setNotes] = useState(editData?.notes || '')
 
@@ -86,6 +88,7 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
     setSubtotalEuros(editData?.subtotal ? (editData.subtotal / 100).toFixed(2) : '')
     setVatAmountEuros(editData?.vatAmount ? (editData.vatAmount / 100).toFixed(2) : '')
     setTotalIncVat(editData?.totalIncVat ? (editData.totalIncVat / 100).toFixed(2) : '')
+    setCurrency(editData?.currency || 'EUR')
     setCategory(editData?.category || 'other')
     setNotes(editData?.notes || '')
   }, [editData])
@@ -102,6 +105,7 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
       if (data.dueDate) setDueDate(data.dueDate)
       if (data.subtotal != null) setSubtotalEuros((data.subtotal / 100).toFixed(2))
       if (data.vatAmount != null) setVatAmountEuros((data.vatAmount / 100).toFixed(2))
+      if (data.currency) setCurrency(data.currency)
     }
   }
 
@@ -127,6 +131,7 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
       subtotal: Math.round((parseFloat(subtotalEuros) || 0) * 100),
       vatAmount: Math.round((parseFloat(vatAmountEuros) || 0) * 100),
       totalIncVat: Math.round((parseFloat(totalIncVat) || 0) * 100),
+      currency,
       category: category || 'other',
       notes: notes || undefined,
     }
@@ -243,7 +248,31 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
             </div>
           </div>
 
-          {/* Amounts */}
+          {/* Currency + Amounts */}
+          <div className="space-y-2">
+            <Label htmlFor="currency">Valuta</Label>
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger id="currency" className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+                <SelectItem value="CHF">CHF</SelectItem>
+                <SelectItem value="SEK">SEK</SelectItem>
+                <SelectItem value="NOK">NOK</SelectItem>
+                <SelectItem value="DKK">DKK</SelectItem>
+                <SelectItem value="PLN">PLN</SelectItem>
+                <SelectItem value="CZK">CZK</SelectItem>
+              </SelectContent>
+            </Select>
+            {currency !== 'EUR' && (
+              <p className="text-xs text-amber-600">
+                Let op: bedragen worden opgeslagen in {currency}, niet automatisch omgerekend naar EUR.
+              </p>
+            )}
+          </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subtotal">{t('subtotal')}</Label>

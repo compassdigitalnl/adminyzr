@@ -92,6 +92,13 @@ export const PurchaseInvoices: CollectionConfig = {
       admin: { description: 'Totaal incl. BTW (in centen)' },
     },
     {
+      name: 'currency',
+      type: 'text',
+      defaultValue: 'EUR',
+      label: 'Valuta',
+      admin: { description: 'ISO 4217 valutacode (bijv. EUR, USD, GBP)' },
+    },
+    {
       name: 'category',
       type: 'select',
       defaultValue: 'other',

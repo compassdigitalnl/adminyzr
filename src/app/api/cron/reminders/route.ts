@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       collection: 'invoices',
       id: inv.id,
       data: { status: 'overdue' },
+      overrideAccess: true,
     })
   }
 
@@ -141,6 +142,7 @@ export async function GET(request: NextRequest) {
         collection: 'invoices',
         id: rawInv.id,
         data: { remindersSent: remindersSent + 1 },
+        overrideAccess: true,
       })
 
       sentCount++

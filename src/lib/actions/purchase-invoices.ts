@@ -15,6 +15,7 @@ export type PurchaseInvoiceFormData = {
   subtotal: number // in centen
   vatAmount: number // in centen
   totalIncVat: number // in centen
+  currency?: string // ISO 4217 (EUR, USD, GBP, etc.)
   category?: string
   notes?: string
 }
@@ -98,6 +99,7 @@ export async function createPurchaseInvoice(data: PurchaseInvoiceFormData) {
       subtotal: data.subtotal,
       vatAmount: data.vatAmount,
       totalIncVat: data.totalIncVat,
+      currency: data.currency || 'EUR',
       category: data.category || 'other',
       notes: data.notes,
       status: 'pending_review',
@@ -124,6 +126,7 @@ export async function updatePurchaseInvoice(id: string, data: PurchaseInvoiceFor
       subtotal: data.subtotal,
       vatAmount: data.vatAmount,
       totalIncVat: data.totalIncVat,
+      currency: data.currency || 'EUR',
       category: data.category || 'other',
       notes: data.notes,
     },
