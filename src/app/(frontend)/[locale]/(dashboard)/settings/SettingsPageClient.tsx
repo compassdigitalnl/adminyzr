@@ -32,6 +32,13 @@ import {
   removeTeamMember,
 } from '@/lib/actions/team'
 import {
+  getPaymentProviders,
+  createPaymentProvider,
+  deletePaymentProvider,
+  setDefaultProvider,
+  testProviderConnection,
+} from '@/lib/actions/payment-providers'
+import {
   Plus,
   Trash2,
   Users,
@@ -42,6 +49,10 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Wallet,
+  Star,
+  Zap,
+  Loader2,
 } from 'lucide-react'
 import { createPortalSession } from '@/lib/actions/billing'
 
@@ -55,10 +66,11 @@ type Props = {
     billing: string
     team: string
     integrations: string
+    payments: string
   }
 }
 
-type Tab = 'organization' | 'profile' | 'billing' | 'team' | 'integrations'
+type Tab = 'organization' | 'profile' | 'billing' | 'team' | 'payments' | 'integrations'
 
 export function SettingsPageClient({ organization, user, translations }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('organization')
@@ -68,6 +80,7 @@ export function SettingsPageClient({ organization, user, translations }: Props) 
     { key: 'profile', label: translations.profile },
     { key: 'billing', label: translations.billing },
     { key: 'team', label: translations.team },
+    { key: 'payments', label: translations.payments },
     { key: 'integrations', label: translations.integrations },
   ]
 
@@ -104,6 +117,9 @@ export function SettingsPageClient({ organization, user, translations }: Props) 
           )}
           {activeTab === 'team' && (
             <TeamTab currentUser={user} />
+          )}
+          {activeTab === 'payments' && (
+            <PaymentProvidersTab />
           )}
           {activeTab === 'integrations' && (
             <IntegrationsTab organization={organization} />
@@ -508,6 +524,361 @@ function InviteDialog({
           </Button>
           <Button type="submit" disabled={loading}>
             {loading ? tc('loading') : 'Uitnodigen'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  )
+}
+
+// ─── Payment Providers Tab ───────────────────────────────────────────────────
+
+type PaymentProviderItem = {
+  id: string
+  name: string
+  provider: string
+  isDefault: boolean
+  isActive: boolean
+  testMode: boolean
+  apiKeyPrefix: string
+}
+
+const PROVIDER_OPTIONS = [
+  { value: 'mollie', label: 'Mollie' },
+  { value: 'stripe', label: 'Stripe' },
+  { value: 'multisafepay', label: 'MultiSafePay' },
+] as const
+
+const PROVIDER_LABELS: Record<string, string> = {
+  mollie: 'Mollie',
+  stripe: 'Stripe',
+  multisafepay: 'MultiSafePay',
+}
+
+function PaymentProvidersTab() {
+  const tc = useTranslations('common')
+  const [providers, setProviders] = useState<PaymentProviderItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [addOpen, setAddOpen] = useState(false)
+
+  const loadProviders = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await getPaymentProviders()
+      setProviders(data as PaymentProviderItem[])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tc('error'))
+    } finally {
+      setLoading(false)
+    }
+  }, [tc])
+
+  useEffect(() => {
+    loadProviders()
+  }, [loadProviders])
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Betaalproviders</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Configureer betaalproviders om betaallinks op facturen te plaatsen. Klanten kunnen dan direct online betalen.
+            </p>
+          </div>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Provider toevoegen
+              </Button>
+            </DialogTrigger>
+            <AddProviderDialog
+              onClose={() => setAddOpen(false)}
+              onAdded={loadProviders}
+            />
+          </Dialog>
+        </div>
+
+        {error && (
+          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+        )}
+
+        {loading ? (
+          <div className="mt-6 flex items-center justify-center py-8">
+            <div className="text-sm text-muted-foreground">{tc('loading')}</div>
+          </div>
+        ) : providers.length === 0 ? (
+          <div className="mt-6 flex flex-col items-center justify-center py-8 text-center">
+            <Wallet className="mb-3 h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              Nog geen betaalprovider geconfigureerd. Voeg een provider toe om betaallinks op facturen te activeren.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-3">
+            {providers.map((prov) => (
+              <ProviderRow
+                key={prov.id}
+                provider={prov}
+                onUpdated={loadProviders}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <h3 className="text-sm font-medium">Hoe werkt het?</h3>
+        <ol className="mt-2 space-y-1 text-sm text-muted-foreground list-decimal list-inside">
+          <li>Voeg een betaalprovider toe (Mollie, Stripe of MultiSafePay)</li>
+          <li>Stel deze in als standaard provider</li>
+          <li>Bij het versturen van een factuur wordt automatisch een betaallink gegenereerd</li>
+          <li>Zodra de klant betaalt, wordt de factuur automatisch op &quot;betaald&quot; gezet</li>
+        </ol>
+      </div>
+    </div>
+  )
+}
+
+function ProviderRow({
+  provider,
+  onUpdated,
+}: {
+  provider: PaymentProviderItem
+  onUpdated: () => void
+}) {
+  const tc = useTranslations('common')
+  const [testLoading, setTestLoading] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [defaultLoading, setDefaultLoading] = useState(false)
+
+  async function handleTest() {
+    setTestLoading(true)
+    setTestResult(null)
+    try {
+      const result = await testProviderConnection(provider.id)
+      setTestResult(result)
+      setTimeout(() => setTestResult(null), 5000)
+    } catch (err) {
+      setTestResult({ success: false, message: err instanceof Error ? err.message : tc('error') })
+    } finally {
+      setTestLoading(false)
+    }
+  }
+
+  async function handleSetDefault() {
+    setDefaultLoading(true)
+    try {
+      await setDefaultProvider(provider.id)
+      onUpdated()
+    } catch {
+      // Ignore
+    } finally {
+      setDefaultLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`Weet je zeker dat je "${provider.name}" wilt verwijderen?`)) return
+    setDeleteLoading(true)
+    try {
+      await deletePaymentProvider(provider.id)
+      onUpdated()
+    } catch {
+      // Ignore
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <Wallet className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{provider.name}</span>
+            <Badge variant="outline">{PROVIDER_LABELS[provider.provider] || provider.provider}</Badge>
+            {provider.isDefault && (
+              <Badge variant="success">
+                <Star className="mr-1 h-3 w-3" />
+                Standaard
+              </Badge>
+            )}
+            {provider.testMode && (
+              <Badge variant="warning">Test</Badge>
+            )}
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            API key: {provider.apiKeyPrefix}
+          </p>
+          {testResult && (
+            <p className={`mt-1 text-xs ${testResult.success ? 'text-green-600' : 'text-destructive'}`}>
+              {testResult.message}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleTest} disabled={testLoading}>
+          {testLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+        </Button>
+        {!provider.isDefault && (
+          <Button variant="outline" size="sm" onClick={handleSetDefault} disabled={defaultLoading}>
+            <Star className="h-4 w-4" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDelete}
+          disabled={deleteLoading}
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function AddProviderDialog({
+  onClose,
+  onAdded,
+}: {
+  onClose: () => void
+  onAdded: () => void
+}) {
+  const tc = useTranslations('common')
+  const [name, setName] = useState('')
+  const [provider, setProvider] = useState<string>('mollie')
+  const [apiKey, setApiKey] = useState('')
+  const [webhookSecret, setWebhookSecret] = useState('')
+  const [testMode, setTestMode] = useState(false)
+  const [isDefault, setIsDefault] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      await createPaymentProvider({
+        name,
+        provider,
+        apiKey,
+        testMode,
+        webhookSecret: webhookSecret || undefined,
+        isDefault,
+      })
+      onAdded()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tc('error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <DialogContent>
+      <form onSubmit={handleSubmit}>
+        <DialogHeader>
+          <DialogTitle>Betaalprovider toevoegen</DialogTitle>
+          <DialogDescription>
+            Voeg een betaalprovider toe om automatisch betaallinks op facturen te genereren.
+          </DialogDescription>
+        </DialogHeader>
+
+        {error && (
+          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+        )}
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <Label htmlFor="providerType">Provider *</Label>
+            <Select value={provider} onValueChange={setProvider}>
+              <SelectTrigger id="providerType">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROVIDER_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="providerName">Naam *</Label>
+            <Input
+              id="providerName"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={`${PROVIDER_LABELS[provider] || 'Provider'} Productie`}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="providerApiKey">API-sleutel *</Label>
+            <Input
+              id="providerApiKey"
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={provider === 'mollie' ? 'live_xxx of test_xxx' : 'sk_xxx'}
+              required
+            />
+          </div>
+          {provider === 'stripe' && (
+            <div>
+              <Label htmlFor="providerWebhookSecret">Webhook secret</Label>
+              <Input
+                id="providerWebhookSecret"
+                type="password"
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+                placeholder="whsec_xxx"
+              />
+            </div>
+          )}
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={testMode}
+                onChange={(e) => setTestMode(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Testmodus
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={isDefault}
+                onChange={(e) => setIsDefault(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Als standaard instellen
+            </label>
+          </div>
+        </div>
+
+        <DialogFooter className="mt-6">
+          <Button type="button" variant="outline" onClick={onClose}>
+            {tc('cancel')}
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? tc('loading') : 'Toevoegen'}
           </Button>
         </DialogFooter>
       </form>

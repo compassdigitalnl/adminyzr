@@ -20,6 +20,7 @@ export type InvoiceEmailData = {
   notes?: string
   orgLogo?: string
   brandColor?: string
+  paymentUrl?: string
 }
 
 export function invoiceEmailHtml(data: InvoiceEmailData): string {
@@ -79,9 +80,20 @@ export function invoiceEmailHtml(data: InvoiceEmailData): string {
 
       ${data.notes ? `<p class="note">${data.notes}</p>` : ''}
 
+      ${data.paymentUrl ? `
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${data.paymentUrl}" style="display: inline-block; background: ${brandColor}; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
+          Betaal nu — ${formatEuro(data.totalIncVat)}
+        </a>
+        <p style="font-size: 12px; color: #999; margin-top: 8px;">
+          Klik op de knop om veilig online te betalen via iDEAL, creditcard of andere betaalmethoden.
+        </p>
+      </div>
+      ` : `
       <p style="font-size: 14px; color: #444; margin-top: 24px;">
         Wij verzoeken u vriendelijk het bedrag voor de vervaldatum over te maken.
       </p>
+      `}
     </div>
     <div class="footer">
       <p>${data.orgName} — Verstuurd via Adminyzr</p>
@@ -104,7 +116,7 @@ Vervaldatum: ${formatDate(data.dueDate)}
 Totaal incl. BTW: ${formatEuro(data.totalIncVat)}
 
 ${data.notes ? `Opmerking: ${data.notes}\n` : ''}
-Wij verzoeken u vriendelijk het bedrag voor de vervaldatum over te maken.
+${data.paymentUrl ? `Betaal nu via deze link: ${data.paymentUrl}\n` : 'Wij verzoeken u vriendelijk het bedrag voor de vervaldatum over te maken.'}
 
 Met vriendelijke groet,
 ${data.orgName}

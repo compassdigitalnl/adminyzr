@@ -117,6 +117,25 @@ export const Invoices: CollectionConfig = {
       admin: { readOnly: true },
     },
     {
+      name: 'paymentUrl',
+      type: 'text',
+      label: 'Betaallink',
+      admin: { readOnly: true, description: 'Automatisch gegenereerde betaallink' },
+    },
+    {
+      name: 'paymentProvider',
+      type: 'relationship',
+      relationTo: 'payment-providers',
+      label: 'Betaalprovider',
+      admin: { readOnly: true },
+    },
+    {
+      name: 'paymentExternalId',
+      type: 'text',
+      label: 'Payment extern ID',
+      admin: { readOnly: true, hidden: true },
+    },
+    {
       name: 'notes',
       type: 'textarea',
       label: 'Opmerkingen',

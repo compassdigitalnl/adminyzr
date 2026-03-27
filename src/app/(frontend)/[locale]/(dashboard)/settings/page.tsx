@@ -24,6 +24,7 @@ export default async function SettingsPage() {
         profile: t('profile'),
         billing: t('billing'),
         team: t('team'),
+        payments: t('payments'),
         integrations: t('integrations'),
       }}
     />

@@ -4,7 +4,9 @@ import { getPayloadClient } from '@/lib/get-payload'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getMailTransporter, getFromAddress } from '@/lib/email/transporter'
-import { invoiceEmailHtml, invoiceEmailText } from '@/lib/email/templates/invoice-email'
+import { invoiceEmailHtml, invoiceEmailText, type InvoiceEmailData } from '@/lib/email/templates/invoice-email'
+import { getDefaultProviderForOrg } from '@/lib/payments/factory'
+import { createPaymentLink } from '@/lib/actions/payments'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { InvoicePdf, type InvoicePdfData } from '@/lib/pdf/invoice-template'
 import React from 'react'
@@ -98,8 +100,20 @@ export async function sendInvoiceEmail(invoiceId: string) {
   // eslint-disable-next-line
   const pdfBuffer = await renderToBuffer(React.createElement(InvoicePdf, { data: pdfData }) as any)
 
+  // Auto-create payment link if a provider is configured
+  let paymentUrl: string | undefined
+  try {
+    const defaultProvider = await getDefaultProviderForOrg(orgId as string)
+    if (defaultProvider) {
+      const paymentResult = await createPaymentLink(invoiceId)
+      paymentUrl = paymentResult.url
+    }
+  } catch {
+    // Payment link creation failure should not block invoice sending
+  }
+
   // Build email
-  const emailData = {
+  const emailData: InvoiceEmailData = {
     orgName: (org.name as string) || 'Adminyzr',
     clientName: (client.companyName as string) || (client.contactName as string) || '',
     invoiceNumber: (invoice.invoiceNumber as string) || '',
@@ -107,6 +121,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
     dueDate: (invoice.dueDate as string) || '',
     totalIncVat: (invoice.totalIncVat as number) || 0,
     notes: invoice.notes as string | undefined,
+    paymentUrl,
   }
 
   const transporter = getMailTransporter()

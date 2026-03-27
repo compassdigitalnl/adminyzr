@@ -9,6 +9,7 @@ type Invoice = {
   dueDate: string
   totalIncVat: number
   status: string
+  paymentUrl?: string
 }
 
 type Props = {
@@ -69,6 +70,8 @@ export function PortalInvoiceTable({ invoices }: Props) {
             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
               {t('status')}
             </th>
+            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -88,6 +91,18 @@ export function PortalInvoiceTable({ invoices }: Props) {
               </td>
               <td className="whitespace-nowrap px-6 py-4">
                 <StatusBadge status={invoice.status} />
+              </td>
+              <td className="whitespace-nowrap px-6 py-4 text-right">
+                {invoice.paymentUrl && (invoice.status === 'sent' || invoice.status === 'overdue') && (
+                  <a
+                    href={invoice.paymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                  >
+                    {t('payNow')}
+                  </a>
+                )}
               </td>
             </tr>
           ))}

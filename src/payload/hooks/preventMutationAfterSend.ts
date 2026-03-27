@@ -5,7 +5,7 @@ import type { CollectionBeforeChangeHook } from 'payload'
  * Facturen zijn juridische documenten: na versturen NIET meer muteren.
  * Alleen status en paidAt/remindersSent mogen nog gewijzigd worden.
  */
-const ALLOWED_FIELDS_AFTER_SEND = ['status', 'paidAt', 'remindersSent', 'updatedAt']
+const ALLOWED_FIELDS_AFTER_SEND = ['status', 'paidAt', 'remindersSent', 'updatedAt', 'paymentUrl', 'paymentProvider', 'paymentExternalId']
 
 export const preventMutationAfterSend: CollectionBeforeChangeHook = async ({
   data,

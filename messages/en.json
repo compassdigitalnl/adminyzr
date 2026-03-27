@@ -541,7 +541,36 @@
     "profile": "Profile",
     "billing": "Billing",
     "team": "Team",
+    "payments": "Payments",
     "integrations": "Integrations"
+  },
+  "payments": {
+    "title": "Payments",
+    "providers": "Payment providers",
+    "addProvider": "Add provider",
+    "provider": "Provider",
+    "apiKey": "API key",
+    "testMode": "Test mode",
+    "setDefault": "Set as default",
+    "testConnection": "Test connection",
+    "connectionSuccess": "Connection successful",
+    "connectionFailed": "Connection failed",
+    "createPaymentLink": "Create payment link",
+    "paymentLink": "Payment link",
+    "payNow": "Pay now",
+    "refund": "Refund",
+    "transactions": "Transactions",
+    "noProviders": "No payment provider configured yet",
+    "noTransactions": "No transactions yet",
+    "status": {
+      "open": "Open",
+      "pending": "Pending",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    }
   },
   "portal": {
     "title": "Client Portal",
@@ -576,7 +605,8 @@
     "status": "Status",
     "actions": "Actions",
     "verifying": "Verifying access...",
-    "redirecting": "Redirecting..."
+    "redirecting": "Redirecting...",
+    "payNow": "Pay now"
   },
   "onboarding": {
     "title": "Create account",

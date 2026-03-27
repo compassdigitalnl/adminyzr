@@ -30,6 +30,8 @@ import { LeaveRequests } from './payload/collections/LeaveRequests'
 import { PayrollRuns } from './payload/collections/PayrollRuns'
 import { PayrollEntries } from './payload/collections/PayrollEntries'
 import { Orders } from './payload/collections/Orders'
+import { PaymentProviders } from './payload/collections/PaymentProviders'
+import { Transactions } from './payload/collections/Transactions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -73,6 +75,8 @@ export default buildConfig({
     PayrollRuns,
     PayrollEntries,
     Orders,
+    PaymentProviders,
+    Transactions,
   ],
 
   db: postgresAdapter({

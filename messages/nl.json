@@ -541,7 +541,36 @@
     "profile": "Profiel",
     "billing": "Facturatie",
     "team": "Team",
+    "payments": "Betalingen",
     "integrations": "Integraties"
+  },
+  "payments": {
+    "title": "Betalingen",
+    "providers": "Betaalproviders",
+    "addProvider": "Provider toevoegen",
+    "provider": "Provider",
+    "apiKey": "API-sleutel",
+    "testMode": "Testmodus",
+    "setDefault": "Als standaard instellen",
+    "testConnection": "Verbinding testen",
+    "connectionSuccess": "Verbinding geslaagd",
+    "connectionFailed": "Verbinding mislukt",
+    "createPaymentLink": "Betaallink aanmaken",
+    "paymentLink": "Betaallink",
+    "payNow": "Betaal nu",
+    "refund": "Terugbetaling",
+    "transactions": "Transacties",
+    "noProviders": "Nog geen betaalprovider geconfigureerd",
+    "noTransactions": "Nog geen transacties",
+    "status": {
+      "open": "Open",
+      "pending": "In behandeling",
+      "paid": "Betaald",
+      "failed": "Mislukt",
+      "expired": "Verlopen",
+      "cancelled": "Geannuleerd",
+      "refunded": "Terugbetaald"
+    }
   },
   "portal": {
     "title": "Klantportaal",
@@ -576,7 +605,8 @@
     "status": "Status",
     "actions": "Acties",
     "verifying": "Toegang verifiëren...",
-    "redirecting": "Je wordt doorgestuurd..."
+    "redirecting": "Je wordt doorgestuurd...",
+    "payNow": "Betaal nu"
   },
   "onboarding": {
     "title": "Account aanmaken",
