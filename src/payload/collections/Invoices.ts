@@ -107,6 +107,13 @@ export const Invoices: CollectionConfig = {
       admin: { readOnly: true, description: 'Totaal incl. BTW (in centen)' },
     },
     {
+      name: 'currency',
+      type: 'text',
+      defaultValue: 'EUR',
+      label: 'Valuta',
+      admin: { description: 'ISO 4217 valutacode (EUR, USD, GBP, etc.)' },
+    },
+    {
       name: 'paidAt',
       type: 'date',
       label: 'Betaald op',

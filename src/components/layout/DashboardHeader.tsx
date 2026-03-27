@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Search, HelpCircle, User, FileText, Users, Package, FileCheck, Receipt } from 'lucide-react'
+import { Bell, Search, HelpCircle, User, FileText, Users, Package, FileCheck, Receipt, CheckCheck } from 'lucide-react'
 import { globalSearch, type SearchResult } from '@/lib/actions/search'
+import { getNotifications, markNotificationRead, markAllRead } from '@/lib/actions/notifications'
 
 const TYPE_ICONS: Record<string, typeof FileText> = {
   Factuur: FileText,
@@ -119,10 +120,7 @@ export function DashboardHeader() {
         </div>
 
         {/* Notifications */}
-        <button className="relative flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)]">
-          <Bell className="h-[15px] w-[15px] text-[var(--text-secondary)]" strokeWidth={1.75} />
-          <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[var(--blue)] ring-2 ring-[var(--bg-card)]" />
-        </button>
+        <NotificationBell />
 
         {/* Help */}
         <button className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)]">
@@ -135,5 +133,126 @@ export function DashboardHeader() {
         </button>
       </div>
     </header>
+  )
+}
+
+function NotificationBell() {
+  const [open, setOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Record<string, unknown>[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const bellRef = useRef<HTMLDivElement>(null)
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const result = await getNotifications()
+      setNotifications(result.docs as Record<string, unknown>[])
+      setUnreadCount(result.unreadCount)
+    } catch {
+      // Ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    loadNotifications()
+    const interval = setInterval(loadNotifications, 60000) // Poll every minute
+    return () => clearInterval(interval)
+  }, [loadNotifications])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  async function handleMarkAllRead() {
+    await markAllRead()
+    loadNotifications()
+  }
+
+  async function handleClick(notif: Record<string, unknown>) {
+    if (!notif.isRead) {
+      await markNotificationRead(notif.id as string)
+      loadNotifications()
+    }
+    if (notif.link) {
+      setOpen(false)
+      window.location.href = `/nl${notif.link}`
+    }
+  }
+
+  const TYPE_COLORS: Record<string, string> = {
+    info: 'bg-blue-500',
+    success: 'bg-green-500',
+    warning: 'bg-amber-500',
+    error: 'bg-red-500',
+    payment: 'bg-green-500',
+    invoice: 'bg-blue-500',
+  }
+
+  return (
+    <div ref={bellRef} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="relative flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)]"
+      >
+        <Bell className="h-[15px] w-[15px] text-[var(--text-secondary)]" strokeWidth={1.75} />
+        {unreadCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--blue)] text-[9px] font-bold text-white ring-2 ring-[var(--bg-card)]">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-80 rounded-lg border bg-white shadow-lg overflow-hidden z-50">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b">
+            <span className="text-sm font-medium">Meldingen</span>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+              >
+                <CheckCheck className="h-3 w-3" />
+                Alles gelezen
+              </button>
+            )}
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="px-4 py-6 text-center text-xs text-gray-400">
+                Geen meldingen
+              </div>
+            ) : (
+              notifications.map((notif) => (
+                <button
+                  key={notif.id as string}
+                  onClick={() => handleClick(notif)}
+                  className={`flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b last:border-0 ${
+                    !notif.isRead ? 'bg-blue-50/50' : ''
+                  }`}
+                >
+                  <span className={`mt-1 h-2 w-2 rounded-full shrink-0 ${TYPE_COLORS[notif.type as string] || 'bg-gray-400'}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{notif.title as string}</div>
+                    {notif.message ? (
+                      <div className="text-xs text-gray-500 truncate">{String(notif.message)}</div>
+                    ) : null}
+                    <div className="text-[10px] text-gray-400 mt-0.5">
+                      {new Date(notif.createdAt as string).toLocaleDateString('nl-NL', {
+                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
