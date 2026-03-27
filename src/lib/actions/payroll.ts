@@ -25,7 +25,7 @@ async function getAuthUser() {
   return { payload, user, orgId: orgId as string }
 }
 
-export function calculatePayroll(grossSalary: number, bonus = 0, deductions = 0) {
+export async function calculatePayroll(grossSalary: number, bonus = 0, deductions = 0) {
   const totalGross = grossSalary + bonus - deductions
   const taxDeduction = Math.round(totalGross * LOONHEFFING_RATE)
   const socialSecurity = Math.round(totalGross * SOCIAL_SECURITY_RATE)
@@ -171,7 +171,7 @@ export async function processPayrollRun(id: string) {
     const grossSalary = (emp.salary as number) || 0
     if (grossSalary === 0) continue // Skip employees without salary
 
-    const calc = calculatePayroll(grossSalary)
+    const calc = await calculatePayroll(grossSalary)
 
     await payload.create({
       collection: 'payroll-entries',
