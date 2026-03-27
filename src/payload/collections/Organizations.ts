@@ -82,21 +82,33 @@ export const Organizations: CollectionConfig = {
     {
       name: 'branding',
       type: 'group',
+      label: 'Klantportaal branding',
       fields: [
         {
           name: 'logo',
           type: 'upload',
           relationTo: 'attachments',
+          label: 'Logo',
+          admin: { description: 'Logo dat getoond wordt in het klantportaal en op factuur-emails' },
         },
         {
           name: 'primaryColor',
           type: 'text',
-          defaultValue: '#1e40af',
+          defaultValue: '#2563EB',
+          label: 'Primaire kleur',
+          admin: { description: 'Hex kleurcode bijv. #2563EB' },
         },
         {
           name: 'secondaryColor',
           type: 'text',
           defaultValue: '#3b82f6',
+          label: 'Secundaire kleur',
+        },
+        {
+          name: 'portalWelcomeText',
+          type: 'textarea',
+          label: 'Welkomsttekst portaal',
+          admin: { description: 'Tekst op de klantportaal landingspagina' },
         },
       ],
     },
@@ -130,34 +142,6 @@ export const Organizations: CollectionConfig = {
           name: 'footerText',
           type: 'textarea',
           admin: { description: 'Tekst onderaan factuur (bijv. bankgegevens, voorwaarden)' },
-        },
-      ],
-    },
-    // Portal branding
-    {
-      name: 'branding',
-      type: 'group',
-      label: 'Klantportaal branding',
-      fields: [
-        {
-          name: 'logo',
-          type: 'upload',
-          relationTo: 'attachments',
-          label: 'Logo',
-          admin: { description: 'Logo dat getoond wordt in het klantportaal en op factuur-emails' },
-        },
-        {
-          name: 'primaryColor',
-          type: 'text',
-          defaultValue: '#2563EB',
-          label: 'Primaire kleur',
-          admin: { description: 'Hex kleurcode bijv. #2563EB' },
-        },
-        {
-          name: 'portalWelcomeText',
-          type: 'textarea',
-          label: 'Welkomsttekst portaal',
-          admin: { description: 'Tekst op de klantportaal landingspagina' },
         },
       ],
     },
