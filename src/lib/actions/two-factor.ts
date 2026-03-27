@@ -4,6 +4,7 @@ import { getPayloadClient } from '@/lib/get-payload'
 import { cookies } from 'next/headers'
 import * as OTPAuth from 'otpauth'
 import QRCode from 'qrcode'
+import crypto from 'crypto'
 
 async function getAuthUser() {
   const payload = await getPayloadClient()
@@ -49,7 +50,7 @@ export async function setupTwoFactor(): Promise<{
 /**
  * Verify TOTP code and enable 2FA for the user.
  */
-export async function enableTwoFactor(secret: string, token: string): Promise<{ success: boolean; error?: string }> {
+export async function enableTwoFactor(secret: string, token: string): Promise<{ success: boolean; error?: string; backupCodes?: string[] }> {
   const { payload, user } = await getAuthUser()
 
   const totp = new OTPAuth.TOTP({
@@ -67,17 +68,44 @@ export async function enableTwoFactor(secret: string, token: string): Promise<{ 
     return { success: false, error: 'Ongeldige verificatiecode' }
   }
 
-  // Store secret and enable 2FA
+  // Generate backup codes
+  const backupCodes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString('hex').toUpperCase()
+  )
+
+  // Store secret, enable 2FA, and save backup codes
   await payload.update({
     collection: 'users',
     id: user.id,
     data: {
       twoFactorSecret: secret,
       twoFactorEnabled: true,
+      twoFactorBackupCodes: JSON.stringify(backupCodes),
     },
   })
 
-  return { success: true }
+  return { success: true, backupCodes }
+}
+
+/**
+ * Regenerate backup codes.
+ */
+export async function regenerateBackupCodes(): Promise<{ backupCodes: string[] }> {
+  const { payload, user } = await getAuthUser()
+
+  const backupCodes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString('hex').toUpperCase()
+  )
+
+  await payload.update({
+    collection: 'users',
+    id: user.id,
+    data: {
+      twoFactorBackupCodes: JSON.stringify(backupCodes),
+    },
+  })
+
+  return { backupCodes }
 }
 
 /**
@@ -122,5 +150,29 @@ export async function verifyTwoFactorCode(userId: string, token: string): Promis
   })
 
   const delta = totp.validate({ token, window: 1 })
-  return delta !== null
+  if (delta !== null) return true
+
+  // Check backup codes
+  const backupCodesJson = user.twoFactorBackupCodes as string
+  if (backupCodesJson) {
+    try {
+      const backupCodes = JSON.parse(backupCodesJson) as string[]
+      const codeIndex = backupCodes.indexOf(token.toUpperCase())
+      if (codeIndex !== -1) {
+        // Remove used backup code
+        backupCodes.splice(codeIndex, 1)
+        await payload.update({
+          collection: 'users',
+          id: userId,
+          data: { twoFactorBackupCodes: JSON.stringify(backupCodes) },
+          overrideAccess: true,
+        })
+        return true
+      }
+    } catch {
+      // Invalid JSON, ignore
+    }
+  }
+
+  return false
 }

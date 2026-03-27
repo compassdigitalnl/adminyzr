@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey, hasScope } from '@/lib/api-key-auth'
 import { getPayloadClient } from '@/lib/get-payload'
+import { validateBody, purchaseInvoiceCreateSchema } from '@/lib/api-validation'
 import type { Where } from 'payload'
 
 export async function GET(request: NextRequest) {
@@ -38,9 +39,12 @@ export async function POST(request: NextRequest) {
   const payload = await getPayloadClient()
   const body = await request.json()
 
+  const validation = validateBody(purchaseInvoiceCreateSchema, body)
+  if (!validation.success) return validation.response
+
   const doc = await payload.create({
     collection: 'purchase-invoices',
-    data: { ...body, organization: apiKey.organizationId },
+    data: { ...validation.data, organization: apiKey.organizationId },
     overrideAccess: true,
   })
 

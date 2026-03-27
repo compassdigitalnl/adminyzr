@@ -121,6 +121,11 @@ export const Users: CollectionConfig = {
       admin: { readOnly: true, position: 'sidebar' },
     },
     {
+      name: 'twoFactorBackupCodes',
+      type: 'text',
+      admin: { hidden: true },
+    },
+    {
       name: 'deletedAt',
       type: 'date',
       admin: {

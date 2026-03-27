@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { locales, defaultLocale } from '@/i18n/config'
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/portal']
 
@@ -7,11 +8,49 @@ function isPublicPath(pathWithoutLocale: string): boolean {
   return PUBLIC_PATHS.some((p) => pathWithoutLocale.startsWith(p))
 }
 
+function getClientIP(request: NextRequest): string {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')
+    || 'unknown'
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip Payload admin and API routes
-  if (pathname.startsWith('/admin') || pathname.startsWith('/api')) {
+  // Rate limiting for API routes
+  if (pathname.startsWith('/api/')) {
+    const ip = getClientIP(request)
+
+    // Determine rate limit type
+    let rlType: 'auth' | 'api' | 'ocr' | 'webhook' = 'api'
+    if (pathname.startsWith('/api/auth') || pathname.includes('/login')) rlType = 'auth'
+    else if (pathname.startsWith('/api/ocr')) rlType = 'ocr'
+    else if (pathname.startsWith('/api/webhooks')) rlType = 'webhook'
+
+    const result = checkRateLimit(ip, rlType)
+
+    if (!result.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests' },
+        {
+          status: 429,
+          headers: {
+            ...getRateLimitHeaders(result, rlType),
+            'Retry-After': String(Math.ceil((result.resetAt - Date.now()) / 1000)),
+          },
+        },
+      )
+    }
+
+    // Add rate limit headers to API responses
+    const response = NextResponse.next()
+    const headers = getRateLimitHeaders(result, rlType)
+    Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value))
+    return response
+  }
+
+  // Skip Payload admin routes
+  if (pathname.startsWith('/admin')) {
     return NextResponse.next()
   }
 
