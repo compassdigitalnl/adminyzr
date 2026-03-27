@@ -1,6 +1,9 @@
 import { getTranslations } from 'next-intl/server'
 import { getDashboardStats } from '@/lib/actions/invoices'
 import { DashboardClient } from './DashboardClient'
+import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist'
+import { getDefaultProviderForOrg } from '@/lib/payments/factory'
+import { getOrganization } from '@/lib/actions/settings'
 
 export default async function DashboardPage() {
   const t = await getTranslations('dashboard')
@@ -19,10 +22,35 @@ export default async function DashboardPage() {
     }
   }
 
+  // Onboarding data
+  let orgName = ''
+  let hasPaymentProvider = false
+  try {
+    const org = await getOrganization()
+    orgName = (org.name as string) || ''
+    const orgId = org.id
+    if (orgId) {
+      const provider = await getDefaultProviderForOrg(orgId)
+      hasPaymentProvider = provider !== null
+    }
+  } catch {
+    // Not logged in
+  }
+
+  const hasSmtp = !!process.env.SMTP_HOST && !!process.env.SMTP_USER && !process.env.SMTP_USER.startsWith('your-')
+
   return (
-    <DashboardClient
-      stats={stats}
-      translations={{
+    <>
+      <OnboardingChecklist
+        orgName={orgName}
+        hasClients={stats.totalClients > 0}
+        hasInvoices={stats.recentInvoices.length > 0}
+        hasPaymentProvider={hasPaymentProvider}
+        hasSmtp={hasSmtp}
+      />
+      <DashboardClient
+        stats={stats}
+        translations={{
         title: t('title'),
         welcome: t('welcome'),
         revenue: t('revenue'),
@@ -35,5 +63,6 @@ export default async function DashboardPage() {
         viewAll: t('viewAll'),
       }}
     />
+    </>
   )
 }

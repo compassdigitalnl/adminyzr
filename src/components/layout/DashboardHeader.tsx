@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Search, HelpCircle, User, FileText, Users, Package, FileCheck, Receipt, CheckCheck } from 'lucide-react'
+import { Bell, Search, Sun, Moon, User, FileText, Users, Package, FileCheck, Receipt, CheckCheck } from 'lucide-react'
+import { useTheme } from '@/components/ThemeProvider'
 import { globalSearch, type SearchResult } from '@/lib/actions/search'
 import { getNotifications, markNotificationRead, markAllRead } from '@/lib/actions/notifications'
 
@@ -16,6 +17,7 @@ const TYPE_ICONS: Record<string, typeof FileText> = {
 
 export function DashboardHeader() {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [showResults, setShowResults] = useState(false)
@@ -122,9 +124,17 @@ export function DashboardHeader() {
         {/* Notifications */}
         <NotificationBell />
 
-        {/* Help */}
-        <button className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)]">
-          <HelpCircle className="h-[15px] w-[15px] text-[var(--text-secondary)]" strokeWidth={1.75} />
+        {/* Theme toggle */}
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)]"
+          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-[15px] w-[15px] text-[var(--text-secondary)]" strokeWidth={1.75} />
+          ) : (
+            <Moon className="h-[15px] w-[15px] text-[var(--text-secondary)]" strokeWidth={1.75} />
+          )}
         </button>
 
         {/* Avatar */}
