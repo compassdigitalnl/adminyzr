@@ -25,6 +25,7 @@ import {
   CalendarDays,
   Banknote,
   ShoppingCart,
+  Landmark,
 } from 'lucide-react'
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { key: 'invoices', href: '/invoices', icon: FileText },
   { key: 'subscriptions', href: '/subscriptions', icon: Repeat },
   { key: 'orders', href: '/orders', icon: ShoppingCart },
+  { key: 'bank', href: '/bank', icon: Landmark },
   { key: 'creditNotes', href: '/credit-notes', icon: FileMinus },
   { key: 'purchaseInvoices', href: '/purchase-invoices', icon: Receipt },
   { key: 'quotes', href: '/quotes', icon: FileCheck },
