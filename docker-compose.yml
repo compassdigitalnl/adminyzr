@@ -12,6 +12,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3061
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3061/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,6 +42,25 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - adminyzr-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adminyzr-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    command: ["node", "dist/workers/index.js"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     networks:
       - adminyzr-network
 

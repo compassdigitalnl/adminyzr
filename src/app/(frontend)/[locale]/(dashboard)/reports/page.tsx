@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { getVatReport, getRevenueStats } from '@/lib/actions/reports'
+import { getVatReport, getRevenueStats, getCashflowStats, getKpiStats } from '@/lib/actions/reports'
 import { ReportsPageClient } from './ReportsPageClient'
 
 type Props = {
@@ -22,11 +22,15 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   let vatReport = null
   let revenueStats = null
+  let cashflowStats = null
+  let kpiStats = null
 
   try {
-    [vatReport, revenueStats] = await Promise.all([
+    [vatReport, revenueStats, cashflowStats, kpiStats] = await Promise.all([
       getVatReport({ periodStart: start, periodEnd: end }),
       getRevenueStats({ year }),
+      getCashflowStats({ year }),
+      getKpiStats({ year }),
     ])
   } catch {
     // Not logged in or error
@@ -36,6 +40,8 @@ export default async function ReportsPage({ searchParams }: Props) {
     <ReportsPageClient
       vatReport={vatReport}
       revenueStats={revenueStats}
+      cashflowStats={cashflowStats}
+      kpiStats={kpiStats}
       periodStart={start}
       periodEnd={end}
       year={year}

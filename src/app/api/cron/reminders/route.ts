@@ -106,13 +106,35 @@ export async function GET(request: NextRequest) {
         reminderNumber: remindersSent + 1,
       }
 
+      const reminderSubject = `Herinnering: Factuur ${emailData.invoiceNumber} — ${emailData.orgName}`
+      const recipientEmail = client.email as string
+
       await transporter.sendMail({
         from: `"${emailData.orgName}" <${getFromAddress()}>`,
-        to: client.email as string,
-        subject: `Herinnering: Factuur ${emailData.invoiceNumber} — ${emailData.orgName}`,
+        to: recipientEmail,
+        subject: reminderSubject,
         html: reminderEmailHtml(emailData),
         text: reminderEmailText(emailData),
       })
+
+      // Log successful email
+      try {
+        await payload.create({
+          collection: 'email-log',
+          data: {
+            to: recipientEmail,
+            subject: reminderSubject,
+            status: 'sent',
+            relatedCollection: 'invoices',
+            relatedDocumentId: rawInv.id,
+            organization: orgId,
+            sentAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+        })
+      } catch {
+        // Email log failure shouldn't block the operation
+      }
 
       // Update reminder count
       await payload.update({
@@ -124,6 +146,24 @@ export async function GET(request: NextRequest) {
       sentCount++
     } catch (error) {
       console.error(`[Reminders] Failed to send reminder for invoice ${inv.invoiceNumber}:`, error)
+      // Log failed email
+      try {
+        await payload.create({
+          collection: 'email-log',
+          data: {
+            to: (client?.email as string) || 'unknown',
+            subject: `Herinnering: Factuur ${inv.invoiceNumber as string}`,
+            status: 'failed',
+            relatedCollection: 'invoices',
+            relatedDocumentId: rawInv.id,
+            organization: orgId,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          overrideAccess: true,
+        })
+      } catch {
+        // Email log failure shouldn't block the operation
+      }
     }
   }
 

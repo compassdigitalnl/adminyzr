@@ -155,3 +155,182 @@ export async function getRevenueStats(params: {
 
   return months
 }
+
+// Cashflow: inkomsten (betaalde facturen) vs uitgaven (betaalde inkoopfacturen) per maand
+export type CashflowMonth = {
+  month: number
+  income: number
+  expenses: number
+  net: number
+}
+
+export async function getCashflowStats(params: { year: number }): Promise<CashflowMonth[]> {
+  const { payload, orgId } = await getAuthUser()
+
+  const months: CashflowMonth[] = []
+
+  for (let m = 0; m < 12; m++) {
+    const start = new Date(params.year, m, 1).toISOString()
+    const end = new Date(params.year, m + 1, 0, 23, 59, 59).toISOString()
+
+    const [paidInvoices, paidPurchases] = await Promise.all([
+      payload.find({
+        collection: 'invoices',
+        where: {
+          and: [
+            { organization: { equals: orgId } },
+            { deletedAt: { exists: false } },
+            { status: { equals: 'paid' } },
+            { paidAt: { greater_than_equal: start } },
+            { paidAt: { less_than_equal: end } },
+          ],
+        },
+        limit: 500,
+      }),
+      payload.find({
+        collection: 'purchase-invoices',
+        where: {
+          and: [
+            { organization: { equals: orgId } },
+            { deletedAt: { exists: false } },
+            { status: { equals: 'paid' } },
+            { paidAt: { greater_than_equal: start } },
+            { paidAt: { less_than_equal: end } },
+          ],
+        },
+        limit: 500,
+      }),
+    ])
+
+    type Doc = Record<string, unknown>
+    const income = paidInvoices.docs.reduce((s, d) => s + ((d as Doc).totalIncVat as number || 0), 0)
+    const expenses = paidPurchases.docs.reduce((s, d) => s + ((d as Doc).totalIncVat as number || 0), 0)
+
+    months.push({ month: m + 1, income, expenses, net: income - expenses })
+  }
+
+  return months
+}
+
+// KPI's: gemiddelde betalingstermijn, top klanten, omzetgroei
+export type KpiStats = {
+  avgPaymentDays: number
+  topClients: { name: string; revenue: number }[]
+  revenueGrowth: number // percentage vs vorig kwartaal
+  totalPaidThisYear: number
+  totalExpensesThisYear: number
+  profitMargin: number // percentage
+}
+
+export async function getKpiStats(params: { year: number }): Promise<KpiStats> {
+  const { payload, orgId } = await getAuthUser()
+
+  const yearStart = new Date(params.year, 0, 1).toISOString()
+  const yearEnd = new Date(params.year, 11, 31, 23, 59, 59).toISOString()
+
+  const [paidInvoices, paidPurchases] = await Promise.all([
+    payload.find({
+      collection: 'invoices',
+      where: {
+        and: [
+          { organization: { equals: orgId } },
+          { deletedAt: { exists: false } },
+          { status: { equals: 'paid' } },
+          { paidAt: { greater_than_equal: yearStart } },
+          { paidAt: { less_than_equal: yearEnd } },
+        ],
+      },
+      limit: 1000,
+      depth: 1,
+    }),
+    payload.find({
+      collection: 'purchase-invoices',
+      where: {
+        and: [
+          { organization: { equals: orgId } },
+          { deletedAt: { exists: false } },
+          { status: { equals: 'paid' } },
+          { paidAt: { greater_than_equal: yearStart } },
+          { paidAt: { less_than_equal: yearEnd } },
+        ],
+      },
+      limit: 1000,
+    }),
+  ])
+
+  type Doc = Record<string, unknown>
+
+  // Average payment days (sentAt → paidAt)
+  let totalDays = 0
+  let daysCount = 0
+  for (const rawDoc of paidInvoices.docs) {
+    const doc = rawDoc as Doc
+    const sent = doc.sentAt as string | undefined
+    const paid = doc.paidAt as string | undefined
+    if (sent && paid) {
+      const days = Math.round((new Date(paid).getTime() - new Date(sent).getTime()) / 86400000)
+      if (days >= 0) {
+        totalDays += days
+        daysCount++
+      }
+    }
+  }
+
+  // Top clients by revenue
+  const clientRevenue: Record<string, { name: string; revenue: number }> = {}
+  for (const rawDoc of paidInvoices.docs) {
+    const doc = rawDoc as Doc
+    const client = doc.client as Doc | undefined
+    const clientId = client?.id as string || 'unknown'
+    const clientName = (client?.companyName as string) || (client?.contactName as string) || 'Onbekend'
+    const total = (doc.totalIncVat as number) || 0
+    if (!clientRevenue[clientId]) {
+      clientRevenue[clientId] = { name: clientName, revenue: 0 }
+    }
+    clientRevenue[clientId].revenue += total
+  }
+  const topClients = Object.values(clientRevenue)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
+
+  // Totals
+  const totalPaidThisYear = paidInvoices.docs.reduce((s, d) => s + ((d as Doc).totalIncVat as number || 0), 0)
+  const totalExpensesThisYear = paidPurchases.docs.reduce((s, d) => s + ((d as Doc).totalIncVat as number || 0), 0)
+
+  // Revenue growth: current quarter vs previous quarter
+  const now = new Date()
+  const currentQ = Math.floor(now.getMonth() / 3)
+  const prevQ = currentQ === 0 ? 3 : currentQ - 1
+  const prevQYear = currentQ === 0 ? params.year - 1 : params.year
+
+  let currentQRevenue = 0
+  let prevQRevenue = 0
+
+  for (const rawDoc of paidInvoices.docs) {
+    const doc = rawDoc as Doc
+    const paidAt = doc.paidAt as string | undefined
+    if (!paidAt) continue
+    const paidDate = new Date(paidAt)
+    const q = Math.floor(paidDate.getMonth() / 3)
+    const total = (doc.totalIncVat as number) || 0
+    if (q === currentQ && paidDate.getFullYear() === params.year) currentQRevenue += total
+    if (q === prevQ && paidDate.getFullYear() === prevQYear) prevQRevenue += total
+  }
+
+  const revenueGrowth = prevQRevenue > 0
+    ? Math.round(((currentQRevenue - prevQRevenue) / prevQRevenue) * 100)
+    : 0
+
+  const profitMargin = totalPaidThisYear > 0
+    ? Math.round(((totalPaidThisYear - totalExpensesThisYear) / totalPaidThisYear) * 100)
+    : 0
+
+  return {
+    avgPaymentDays: daysCount > 0 ? Math.round(totalDays / daysCount) : 0,
+    topClients,
+    revenueGrowth,
+    totalPaidThisYear,
+    totalExpensesThisYear,
+    profitMargin,
+  }
+}

@@ -134,6 +134,30 @@ export const PurchaseInvoices: CollectionConfig = {
       type: 'date',
       label: 'Betaald op',
     },
+    // OCR fields
+    {
+      name: 'ocrConfidence',
+      type: 'select',
+      options: [
+        { label: 'Hoog (>90%)', value: 'high' },
+        { label: 'Medium (60-90%)', value: 'medium' },
+        { label: 'Laag (<60%)', value: 'low' },
+      ],
+      admin: { position: 'sidebar', readOnly: true },
+      label: 'OCR betrouwbaarheid',
+    },
+    {
+      name: 'ocrConfidenceScore',
+      type: 'number',
+      admin: { position: 'sidebar', readOnly: true, description: 'Score 0-100' },
+      label: 'OCR score',
+    },
+    {
+      name: 'ocrProcessedAt',
+      type: 'date',
+      admin: { position: 'sidebar', readOnly: true },
+      label: 'OCR verwerkt op',
+    },
     {
       name: 'deletedAt',
       type: 'date',

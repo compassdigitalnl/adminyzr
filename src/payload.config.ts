@@ -17,6 +17,19 @@ import { Quotes } from './payload/collections/Quotes'
 import { PurchaseInvoices } from './payload/collections/PurchaseInvoices'
 import { Attachments } from './payload/collections/Attachments'
 import { AuditLog } from './payload/collections/AuditLog'
+import { CreditNotes } from './payload/collections/CreditNotes'
+import { EmailLog } from './payload/collections/EmailLog'
+import { WebhookLog } from './payload/collections/WebhookLog'
+import { TaxRates } from './payload/collections/TaxRates'
+import { PaymentTerms } from './payload/collections/PaymentTerms'
+import { ApiKeys } from './payload/collections/ApiKeys'
+import { Projects } from './payload/collections/Projects'
+import { Subscriptions } from './payload/collections/Subscriptions'
+import { Employees } from './payload/collections/Employees'
+import { LeaveRequests } from './payload/collections/LeaveRequests'
+import { PayrollRuns } from './payload/collections/PayrollRuns'
+import { PayrollEntries } from './payload/collections/PayrollEntries'
+import { Orders } from './payload/collections/Orders'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -47,6 +60,19 @@ export default buildConfig({
     PurchaseInvoices,
     Attachments,
     AuditLog,
+    CreditNotes,
+    EmailLog,
+    WebhookLog,
+    TaxRates,
+    PaymentTerms,
+    ApiKeys,
+    Projects,
+    Subscriptions,
+    Employees,
+    LeaveRequests,
+    PayrollRuns,
+    PayrollEntries,
+    Orders,
   ],
 
   db: postgresAdapter({
@@ -56,6 +82,17 @@ export default buildConfig({
   }),
 
   plugins: [
+    // S3-compatible storage — works with both AWS S3 and Cloudflare R2.
+    //
+    // Cloudflare R2 configuration:
+    //   S3_ENDPOINT = https://<account-id>.r2.cloudflarestorage.com
+    //   S3_REGION   = auto
+    //   forcePathStyle must be true (R2 does not support virtual-hosted-style URLs)
+    //
+    // AWS S3 configuration:
+    //   S3_ENDPOINT = (leave empty or omit — the SDK uses the default AWS endpoint)
+    //   S3_REGION   = eu-central-1 (or whichever region your bucket lives in)
+    //   forcePathStyle can be true or false; true is safest for compatibility
     s3Storage({
       collections: {
         attachments: {
@@ -69,7 +106,10 @@ export default buildConfig({
           secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
         },
         region: process.env.S3_REGION || 'auto',
-        endpoint: process.env.S3_ENDPOINT,
+        // When S3_ENDPOINT is empty/undefined the SDK falls back to the default
+        // AWS endpoint, so leaving it unset is fine for plain AWS S3.
+        ...(process.env.S3_ENDPOINT ? { endpoint: process.env.S3_ENDPOINT } : {}),
+        // Required for Cloudflare R2; safe to leave enabled for AWS S3 as well.
         forcePathStyle: true,
       },
     }),

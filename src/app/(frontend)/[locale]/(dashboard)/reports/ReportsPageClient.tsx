@@ -3,17 +3,44 @@
 import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Download, TrendingUp, Receipt, Calculator } from 'lucide-react'
+import {
+  Download,
+  TrendingUp,
+  TrendingDown,
+  Receipt,
+  Calculator,
+  Clock,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  FileSpreadsheet,
+  FileText,
+  FileDown,
+} from 'lucide-react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  AreaChart,
+  Area,
+} from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import type { VatReportSummary } from '@/lib/actions/reports'
+import type { VatReportSummary, CashflowMonth, KpiStats } from '@/lib/actions/reports'
 
 type Props = {
   vatReport: VatReportSummary | null
   revenueStats: { month: number; revenue: number; count: number }[] | null
+  cashflowStats: CashflowMonth[] | null
+  kpiStats: KpiStats | null
   periodStart: string
   periodEnd: string
   year: number
@@ -22,9 +49,19 @@ type Props = {
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
 
+function centsToEuros(cents: number) {
+  return cents / 100
+}
+
+function formatEuros(cents: number) {
+  return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(centsToEuros(cents))
+}
+
 export function ReportsPageClient({
   vatReport,
   revenueStats,
+  cashflowStats,
+  kpiStats,
   periodStart,
   periodEnd,
   year,
@@ -47,15 +84,185 @@ export function ReportsPageClient({
     })
   }
 
-  const maxRevenue = revenueStats
-    ? Math.max(...revenueStats.map((m) => m.revenue), 1)
-    : 1
+  // Prepare chart data
+  const revenueChartData = revenueStats?.map((m) => ({
+    name: MONTH_NAMES[m.month - 1],
+    revenue: centsToEuros(m.revenue),
+    count: m.count,
+  })) ?? []
+
+  const cashflowChartData = cashflowStats?.map((m) => ({
+    name: MONTH_NAMES[m.month - 1],
+    income: centsToEuros(m.income),
+    expenses: centsToEuros(m.expenses),
+    net: centsToEuros(m.net),
+  })) ?? []
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">{translations.title}</h1>
 
-      {/* Period selector */}
+      {/* KPI Cards */}
+      {kpiStats && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-green-100 p-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{t('totalRevenue')}</p>
+                <p className="text-2xl font-bold">{formatEuros(kpiStats.totalPaidThisYear)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-red-100 p-2">
+                <TrendingDown className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{t('totalExpenses')}</p>
+                <p className="text-2xl font-bold">{formatEuros(kpiStats.totalExpensesThisYear)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{t('profitMargin')}</p>
+                <p className="text-2xl font-bold">{kpiStats.profitMargin}%</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-purple-100 p-2">
+                <Clock className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{t('avgPaymentDays')}</p>
+                <p className="text-2xl font-bold">
+                  {kpiStats.avgPaymentDays} {t('days')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revenue growth + top clients */}
+      {kpiStats && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Revenue growth */}
+          <div className="rounded-lg border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-3">{t('revenueGrowth')}</h2>
+            <div className="flex items-center gap-2">
+              {kpiStats.revenueGrowth >= 0 ? (
+                <ArrowUpRight className="h-8 w-8 text-green-500" />
+              ) : (
+                <ArrowDownRight className="h-8 w-8 text-red-500" />
+              )}
+              <span
+                className={`text-4xl font-bold ${kpiStats.revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
+                {kpiStats.revenueGrowth > 0 ? '+' : ''}
+                {kpiStats.revenueGrowth}%
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{t('vsLastQuarter')}</p>
+          </div>
+
+          {/* Top clients */}
+          <div className="rounded-lg border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-3">{t('topClients')}</h2>
+            {kpiStats.topClients.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('noData')}</p>
+            ) : (
+              <div className="space-y-3">
+                {kpiStats.topClients.map((client, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm font-medium truncate max-w-[200px]">{client.name}</span>
+                    </div>
+                    <span className="text-sm font-mono font-medium">{formatEuros(client.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Revenue Chart (recharts) */}
+      {revenueChartData.length > 0 && (
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4">{t('revenueYear', { year })}</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={revenueChartData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="name" className="text-xs" />
+              <YAxis
+                className="text-xs"
+                tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                formatter={(value) => [formatEuros(Number(value) * 100), t('revenue')]}
+                labelClassName="font-medium"
+              />
+              <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Cashflow Chart */}
+      {cashflowChartData.length > 0 && (
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4">{t('cashflow')}</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={cashflowChartData}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="name" className="text-xs" />
+              <YAxis
+                className="text-xs"
+                tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                formatter={(value, name) => {
+                  const labels: Record<string, string> = {
+                    income: t('income'),
+                    expenses: t('expenses'),
+                    net: t('netResult'),
+                  }
+                  return [formatEuros(Number(value) * 100), labels[String(name)] || String(name)]
+                }}
+              />
+              <Legend
+                formatter={(value: string) => {
+                  const labels: Record<string, string> = {
+                    income: t('income'),
+                    expenses: t('expenses'),
+                    net: t('netResult'),
+                  }
+                  return labels[value] || value
+                }}
+              />
+              <Area type="monotone" dataKey="income" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} />
+              <Area type="monotone" dataKey="expenses" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} />
+              <Area type="monotone" dataKey="net" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Period selector + VAT Report */}
       <div className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="flex items-end gap-4">
           <div className="space-y-1">
@@ -73,6 +280,34 @@ export function ReportsPageClient({
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
               {t('exportCsv')}
+            </Button>
+          </a>
+        </div>
+      </div>
+
+      {/* Accounting Export */}
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">{t('accountingExport')}</h2>
+          <p className="text-sm text-muted-foreground">{t('accountingExportDescription')}</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <a href={`/api/reports/accounting-export?format=snelstart&start=${start}&end=${end}`}>
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              {t('exportSnelstart')}
+            </Button>
+          </a>
+          <a href={`/api/reports/accounting-export?format=twinfield&start=${start}&end=${end}`}>
+            <Button variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              {t('exportTwinfield')}
+            </Button>
+          </a>
+          <a href={`/api/reports/accounting-export?format=generic&start=${start}&end=${end}`}>
+            <Button variant="outline">
+              <FileDown className="mr-2 h-4 w-4" />
+              {t('exportGeneric')}
             </Button>
           </a>
         </div>
@@ -186,27 +421,6 @@ export function ReportsPageClient({
             </div>
           </div>
         </>
-      )}
-
-      {/* Revenue chart (simple bar chart) */}
-      {revenueStats && (
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">{t('revenueYear', { year })}</h2>
-          <div className="flex items-end gap-2 h-48">
-            {revenueStats.map((m) => (
-              <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-muted-foreground font-mono">
-                  {m.revenue > 0 ? formatCents(m.revenue) : ''}
-                </span>
-                <div
-                  className="w-full rounded-t bg-primary/80 transition-all min-h-[2px]"
-                  style={{ height: `${Math.max((m.revenue / maxRevenue) * 100, 1)}%` }}
-                />
-                <span className="text-xs text-muted-foreground">{MONTH_NAMES[m.month - 1]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       )}
     </div>
   )

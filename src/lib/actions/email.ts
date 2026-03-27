@@ -111,20 +111,64 @@ export async function sendInvoiceEmail(invoiceId: string) {
 
   const transporter = getMailTransporter()
 
-  await transporter.sendMail({
-    from: `"${emailData.orgName}" <${getFromAddress()}>`,
-    to: client.email as string,
-    subject: `Factuur ${emailData.invoiceNumber} — ${emailData.orgName}`,
-    html: invoiceEmailHtml(emailData),
-    text: invoiceEmailText(emailData),
-    attachments: [
-      {
-        filename: `${emailData.invoiceNumber}.pdf`,
-        content: Buffer.from(pdfBuffer),
-        contentType: 'application/pdf',
-      },
-    ],
-  })
+  const emailSubject = `Factuur ${emailData.invoiceNumber} — ${emailData.orgName}`
+  const recipientEmail = client.email as string
+
+  try {
+    await transporter.sendMail({
+      from: `"${emailData.orgName}" <${getFromAddress()}>`,
+      to: recipientEmail,
+      subject: emailSubject,
+      html: invoiceEmailHtml(emailData),
+      text: invoiceEmailText(emailData),
+      attachments: [
+        {
+          filename: `${emailData.invoiceNumber}.pdf`,
+          content: Buffer.from(pdfBuffer),
+          contentType: 'application/pdf',
+        },
+      ],
+    })
+
+    // Log successful email
+    try {
+      await payload.create({
+        collection: 'email-log',
+        data: {
+          to: recipientEmail,
+          subject: emailSubject,
+          status: 'sent',
+          relatedCollection: 'invoices',
+          relatedDocumentId: invoiceId,
+          organization: orgId,
+          sentAt: new Date().toISOString(),
+        },
+        overrideAccess: true,
+      })
+    } catch {
+      // Email log failure shouldn't block the operation
+    }
+  } catch (emailError) {
+    // Log failed email
+    try {
+      await payload.create({
+        collection: 'email-log',
+        data: {
+          to: recipientEmail,
+          subject: emailSubject,
+          status: 'failed',
+          relatedCollection: 'invoices',
+          relatedDocumentId: invoiceId,
+          organization: orgId,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        },
+        overrideAccess: true,
+      })
+    } catch {
+      // Email log failure shouldn't block the operation
+    }
+    throw emailError
+  }
 
   // Update invoice status to sent
   await payload.update({
@@ -136,7 +180,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
     },
   })
 
-  // Log the email
+  // Log the email in audit log
   try {
     await payload.create({
       collection: 'audit-log',

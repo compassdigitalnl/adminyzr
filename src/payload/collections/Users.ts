@@ -128,6 +128,38 @@ export const Users: CollectionConfig = {
         readOnly: true,
       },
     },
+    // Magic link (passwordless login)
+    {
+      name: 'magicLinkHash',
+      type: 'text',
+      admin: { hidden: true, readOnly: true },
+    },
+    {
+      name: 'magicLinkExpiry',
+      type: 'date',
+      admin: { hidden: true, readOnly: true },
+    },
+    // OAuth2 SSO
+    {
+      name: 'oauthProvider',
+      type: 'select',
+      options: [
+        { label: 'Google', value: 'google' },
+        { label: 'Microsoft', value: 'microsoft' },
+      ],
+      admin: { readOnly: true, position: 'sidebar' },
+    },
+    {
+      name: 'oauthId',
+      type: 'text',
+      index: true,
+      admin: { readOnly: true, position: 'sidebar' },
+    },
+    {
+      name: 'avatarUrl',
+      type: 'text',
+      admin: { position: 'sidebar' },
+    },
   ],
   timestamps: true,
 }

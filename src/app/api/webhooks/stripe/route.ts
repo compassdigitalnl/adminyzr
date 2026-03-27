@@ -8,6 +8,24 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
 
   if (!signature) {
+    // Log unsigned request
+    try {
+      const p = await getPayloadClient()
+      await p.create({
+        collection: 'webhook-log',
+        data: {
+          direction: 'incoming',
+          source: 'stripe',
+          method: 'POST',
+          url: '/api/webhooks/stripe',
+          statusCode: 400,
+          error: 'Missing signature',
+        },
+        overrideAccess: true,
+      })
+    } catch {
+      // Logging failure should not break the webhook
+    }
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
   }
 
@@ -23,6 +41,24 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
     console.error('Stripe webhook signature verification failed:', errorMessage)
+    // Log invalid signature
+    try {
+      const p = await getPayloadClient()
+      await p.create({
+        collection: 'webhook-log',
+        data: {
+          direction: 'incoming',
+          source: 'stripe',
+          method: 'POST',
+          url: '/api/webhooks/stripe',
+          statusCode: 400,
+          error: `Invalid signature: ${errorMessage}`,
+        },
+        overrideAccess: true,
+      })
+    } catch {
+      // Logging failure should not break the webhook
+    }
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -141,7 +177,66 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Stripe webhook processing error:', error)
+    // Log failed webhook processing
+    try {
+      await payload.create({
+        collection: 'webhook-log',
+        data: {
+          direction: 'incoming',
+          source: 'stripe',
+          method: 'POST',
+          url: '/api/webhooks/stripe',
+          requestBody: event as unknown as Record<string, unknown>,
+          statusCode: 500,
+          error: error instanceof Error ? error.message : 'Webhook processing failed',
+        },
+        overrideAccess: true,
+      })
+    } catch {
+      // Logging failure should not break the webhook
+    }
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
+  }
+
+  // Log successful webhook processing
+  try {
+    // Try to extract organization ID from event metadata
+    let organizationId: string | undefined
+    const eventObj = event.data.object as unknown as Record<string, unknown>
+    const metadata = eventObj.metadata as Record<string, string> | undefined
+    if (metadata?.organizationId) {
+      organizationId = metadata.organizationId
+    } else if (eventObj.customer) {
+      // Try to find org by Stripe customer ID
+      const customerId = typeof eventObj.customer === 'string' ? eventObj.customer : undefined
+      if (customerId) {
+        const orgs = await payload.find({
+          collection: 'organizations',
+          where: { stripeCustomerId: { equals: customerId } },
+          limit: 1,
+          overrideAccess: true,
+        })
+        if (orgs.docs.length > 0) {
+          organizationId = orgs.docs[0].id as string
+        }
+      }
+    }
+
+    await payload.create({
+      collection: 'webhook-log',
+      data: {
+        direction: 'incoming',
+        source: 'stripe',
+        method: 'POST',
+        url: '/api/webhooks/stripe',
+        requestBody: event as unknown as Record<string, unknown>,
+        statusCode: 200,
+        ...(organizationId ? { organization: organizationId } : {}),
+      },
+      overrideAccess: true,
+    })
+  } catch {
+    // Logging failure should not break the webhook
   }
 
   return NextResponse.json({ received: true })

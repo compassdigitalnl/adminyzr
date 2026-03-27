@@ -1,14 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { updateOrganization, updateProfile } from '@/lib/actions/settings'
 import { setupTwoFactor, enableTwoFactor, disableTwoFactor } from '@/lib/actions/two-factor'
+import {
+  getTeamMembers,
+  inviteTeamMember,
+  updateTeamMemberRole,
+  removeTeamMember,
+} from '@/lib/actions/team'
+import {
+  Plus,
+  Trash2,
+  Users,
+  CreditCard,
+  Mail,
+  Cloud,
+  Globe,
+  Copy,
+  Check,
+  ExternalLink,
+} from 'lucide-react'
+import { createPortalSession } from '@/lib/actions/billing'
 
 type Props = {
   organization: Record<string, unknown> & { id: string }
@@ -68,26 +103,541 @@ export function SettingsPageClient({ organization, user, translations }: Props) 
             <InvoiceSettingsForm org={organization} />
           )}
           {activeTab === 'team' && (
-            <div className="rounded-lg border bg-card p-6 shadow-sm">
-              <h2 className="text-lg font-semibold">{translations.team}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Teambeheer komt in een volgende versie.
-              </p>
-            </div>
+            <TeamTab currentUser={user} />
           )}
           {activeTab === 'integrations' && (
-            <div className="rounded-lg border bg-card p-6 shadow-sm">
-              <h2 className="text-lg font-semibold">{translations.integrations}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Integraties komen in een volgende versie.
-              </p>
-            </div>
+            <IntegrationsTab organization={organization} />
           )}
         </div>
       </div>
     </div>
   )
 }
+
+// ─── Team Tab ────────────────────────────────────────────────────────────────
+
+type TeamMember = {
+  id: string | number
+  name: string | null
+  email: string
+  role: string
+  createdAt: string
+  twoFactorEnabled: boolean
+}
+
+const ROLE_OPTIONS = [
+  { value: 'owner', label: 'Eigenaar' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'accountant', label: 'Boekhouder' },
+  { value: 'member', label: 'Medewerker' },
+  { value: 'viewer', label: 'Alleen lezen' },
+] as const
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Eigenaar',
+  admin: 'Admin',
+  accountant: 'Boekhouder',
+  member: 'Medewerker',
+  viewer: 'Alleen lezen',
+}
+
+function TeamTab({ currentUser }: { currentUser: Record<string, unknown> & { id: string } }) {
+  const tc = useTranslations('common')
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [inviteOpen, setInviteOpen] = useState(false)
+
+  const isOwner = currentUser.role === 'owner'
+  const isAdminOrOwner = currentUser.role === 'owner' || currentUser.role === 'admin'
+
+  const loadMembers = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await getTeamMembers()
+      setMembers(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tc('error'))
+    } finally {
+      setLoading(false)
+    }
+  }, [tc])
+
+  useEffect(() => {
+    loadMembers()
+  }, [loadMembers])
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Teamleden</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Beheer de gebruikers die toegang hebben tot jouw organisatie.
+            </p>
+          </div>
+          {isAdminOrOwner && (
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Lid uitnodigen
+                </Button>
+              </DialogTrigger>
+              <InviteDialog
+                onClose={() => setInviteOpen(false)}
+                onInvited={loadMembers}
+              />
+            </Dialog>
+          )}
+        </div>
+
+        {error && (
+          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="mt-6 flex items-center justify-center py-8">
+            <div className="text-sm text-muted-foreground">{tc('loading')}</div>
+          </div>
+        ) : members.length === 0 ? (
+          <div className="mt-6 flex flex-col items-center justify-center py-8 text-center">
+            <Users className="mb-3 h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">Nog geen teamleden gevonden.</p>
+          </div>
+        ) : (
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="pb-3 pr-4 font-medium">Naam</th>
+                  <th className="pb-3 pr-4 font-medium">E-mail</th>
+                  <th className="pb-3 pr-4 font-medium">Rol</th>
+                  <th className="pb-3 pr-4 font-medium">2FA</th>
+                  <th className="pb-3 pr-4 font-medium">Lid sinds</th>
+                  {isOwner && <th className="pb-3 font-medium">Acties</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((member) => (
+                  <TeamMemberRow
+                    key={member.id}
+                    member={member}
+                    isOwner={isOwner}
+                    isCurrentUser={member.id === currentUser.id}
+                    onRoleChanged={loadMembers}
+                    onRemoved={loadMembers}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TeamMemberRow({
+  member,
+  isOwner,
+  isCurrentUser,
+  onRoleChanged,
+  onRemoved,
+}: {
+  member: TeamMember
+  isOwner: boolean
+  isCurrentUser: boolean
+  onRoleChanged: () => void
+  onRemoved: () => void
+}) {
+  const tc = useTranslations('common')
+  const [roleLoading, setRoleLoading] = useState(false)
+  const [removeLoading, setRemoveLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleRoleChange(newRole: string) {
+    setRoleLoading(true)
+    setError('')
+    try {
+      await updateTeamMemberRole(String(member.id), newRole as 'owner' | 'admin' | 'accountant' | 'member' | 'viewer')
+      onRoleChanged()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tc('error'))
+    } finally {
+      setRoleLoading(false)
+    }
+  }
+
+  async function handleRemove() {
+    if (!confirm(`Weet je zeker dat je ${member.name || member.email} wilt verwijderen uit het team?`)) return
+    setRemoveLoading(true)
+    setError('')
+    try {
+      await removeTeamMember(String(member.id))
+      onRemoved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tc('error'))
+    } finally {
+      setRemoveLoading(false)
+    }
+  }
+
+  const joinedDate = new Date(member.createdAt).toLocaleDateString('nl-NL', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
+  return (
+    <>
+      <tr className="border-b last:border-0">
+        <td className="py-3 pr-4">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{member.name || '-'}</span>
+            {isCurrentUser && (
+              <Badge variant="secondary" className="text-[10px]">Jij</Badge>
+            )}
+          </div>
+        </td>
+        <td className="py-3 pr-4 text-muted-foreground">{member.email}</td>
+        <td className="py-3 pr-4">
+          {isOwner && !isCurrentUser ? (
+            <Select
+              value={member.role}
+              onValueChange={handleRoleChange}
+              disabled={roleLoading}
+            >
+              <SelectTrigger className="h-8 w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Badge variant="outline">{ROLE_LABELS[member.role] || member.role}</Badge>
+          )}
+        </td>
+        <td className="py-3 pr-4">
+          <Badge variant={member.twoFactorEnabled ? 'success' : 'secondary'}>
+            {member.twoFactorEnabled ? 'Actief' : 'Uit'}
+          </Badge>
+        </td>
+        <td className="py-3 pr-4 text-muted-foreground">{joinedDate}</td>
+        {isOwner && (
+          <td className="py-3">
+            {!isCurrentUser && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRemove}
+                disabled={removeLoading}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </td>
+        )}
+      </tr>
+      {error && (
+        <tr>
+          <td colSpan={isOwner ? 6 : 5} className="pb-2">
+            <div className="rounded-md bg-destructive/10 p-2 text-xs text-destructive">{error}</div>
+          </td>
+        </tr>
+      )}
+    </>
+  )
+}
+
+function InviteDialog({
+  onClose,
+  onInvited,
+}: {
+  onClose: () => void
+  onInvited: () => void
+}) {
+  const tc = useTranslations('common')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<string>('member')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<{ temporaryPassword: string; email: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await inviteTeamMember({
+        name,
+        email,
+        role: role as 'owner' | 'admin' | 'accountant' | 'member' | 'viewer',
+      })
+      setResult({ temporaryPassword: res.temporaryPassword, email: res.email })
+      onInvited()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tc('error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleCopy() {
+    if (!result) return
+    navigator.clipboard.writeText(result.temporaryPassword)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleDone() {
+    setName('')
+    setEmail('')
+    setRole('member')
+    setResult(null)
+    setError('')
+    onClose()
+  }
+
+  if (result) {
+    return (
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Lid uitgenodigd</DialogTitle>
+          <DialogDescription>
+            Het account voor <strong>{result.email}</strong> is aangemaakt. Deel het tijdelijke wachtwoord met de gebruiker.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <Label className="text-xs text-muted-foreground">Tijdelijk wachtwoord</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <code className="flex-1 rounded bg-background px-3 py-2 font-mono text-sm">
+                {result.temporaryPassword}
+              </code>
+              <Button variant="outline" size="sm" onClick={handleCopy}>
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Dit wachtwoord wordt slechts eenmaal getoond. De gebruiker kan het na inloggen wijzigen.
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={handleDone}>Sluiten</Button>
+        </DialogFooter>
+      </DialogContent>
+    )
+  }
+
+  return (
+    <DialogContent>
+      <form onSubmit={handleSubmit}>
+        <DialogHeader>
+          <DialogTitle>Teamlid uitnodigen</DialogTitle>
+          <DialogDescription>
+            Voeg een nieuw lid toe aan jouw organisatie. Er wordt een account aangemaakt met een tijdelijk wachtwoord.
+          </DialogDescription>
+        </DialogHeader>
+
+        {error && (
+          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+        )}
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <Label htmlFor="inviteName">Naam *</Label>
+            <Input
+              id="inviteName"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Jan Jansen"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="inviteEmail">E-mail *</Label>
+            <Input
+              id="inviteEmail"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jan@voorbeeld.nl"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="inviteRole">Rol *</Label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger id="inviteRole">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.filter(r => r.value !== 'owner').map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter className="mt-6">
+          <Button type="button" variant="outline" onClick={onClose}>
+            {tc('cancel')}
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? tc('loading') : 'Uitnodigen'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  )
+}
+
+// ─── Integrations Tab ────────────────────────────────────────────────────────
+
+type IntegrationCardProps = {
+  icon: React.ReactNode
+  name: string
+  description: string
+  status: 'connected' | 'not_configured' | 'coming_soon'
+  statusLabel: string
+  action?: React.ReactNode
+}
+
+function IntegrationCard({ icon, name, description, status, statusLabel, action }: IntegrationCardProps) {
+  const statusVariant: Record<string, 'success' | 'secondary' | 'warning'> = {
+    connected: 'success',
+    not_configured: 'secondary',
+    coming_soon: 'warning',
+  }
+
+  return (
+    <div className="rounded-lg border bg-card p-6 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+            {icon}
+          </div>
+          <div>
+            <h3 className="font-semibold">{name}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        <Badge variant={statusVariant[status] || 'secondary'}>
+          {statusLabel}
+        </Badge>
+      </div>
+      {action && <div className="mt-4 flex justify-end">{action}</div>}
+    </div>
+  )
+}
+
+function IntegrationsTab({ organization }: { organization: Record<string, unknown> }) {
+  const [portalLoading, setPortalLoading] = useState(false)
+
+  const subscriptionStatus = (organization.subscriptionStatus as string) || 'none'
+  const stripeConnected = subscriptionStatus === 'active' || subscriptionStatus === 'trialing'
+
+  async function handleOpenBillingPortal() {
+    setPortalLoading(true)
+    try {
+      const result = await createPortalSession()
+      if (result.url) {
+        window.location.href = result.url
+      }
+    } catch {
+      // Ignore errors silently for portal
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Integraties</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Overzicht van gekoppelde diensten en hun status.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {/* Stripe */}
+        <IntegrationCard
+          icon={<CreditCard className="h-5 w-5 text-muted-foreground" />}
+          name="Stripe"
+          description="Online betalingen en abonnementsbeheer voor je facturatie."
+          status={stripeConnected ? 'connected' : 'not_configured'}
+          statusLabel={stripeConnected ? 'Actief' : 'Niet geconfigureerd'}
+          action={
+            stripeConnected ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenBillingPortal}
+                disabled={portalLoading}
+              >
+                {portalLoading ? '...' : 'Beheerportaal'}
+                <ExternalLink className="ml-2 h-3 w-3" />
+              </Button>
+            ) : undefined
+          }
+        />
+
+        {/* Email / SMTP */}
+        <IntegrationCard
+          icon={<Mail className="h-5 w-5 text-muted-foreground" />}
+          name="E-mail (SMTP)"
+          description="Verstuur facturen en offertes per e-mail vanuit Adminyzr."
+          status={process.env.NEXT_PUBLIC_SMTP_CONFIGURED === 'true' ? 'connected' : 'not_configured'}
+          statusLabel={process.env.NEXT_PUBLIC_SMTP_CONFIGURED === 'true' ? 'Geconfigureerd' : 'Niet geconfigureerd'}
+        />
+
+        {/* Cloudflare R2 */}
+        <IntegrationCard
+          icon={<Cloud className="h-5 w-5 text-muted-foreground" />}
+          name="Cloudflare R2"
+          description="Bestandsopslag voor uploads, bijlagen en gegenereerde documenten."
+          status={process.env.NEXT_PUBLIC_R2_CONFIGURED === 'true' ? 'connected' : 'not_configured'}
+          statusLabel={process.env.NEXT_PUBLIC_R2_CONFIGURED === 'true' ? 'Geconfigureerd' : 'Niet geconfigureerd'}
+        />
+
+        {/* Sityzr */}
+        <IntegrationCard
+          icon={<Globe className="h-5 w-5 text-muted-foreground" />}
+          name="Sityzr"
+          description="Koppel je Sityzr website aan Adminyzr voor automatische synchronisatie van klanten en producten."
+          status="coming_soon"
+          statusLabel="Binnenkort beschikbaar"
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Organization Form (unchanged) ──────────────────────────────────────────
 
 function OrganizationForm({ org }: { org: Record<string, unknown> }) {
   const tc = useTranslations('common')
@@ -226,6 +776,8 @@ function OrganizationForm({ org }: { org: Record<string, unknown> }) {
   )
 }
 
+// ─── Profile Form (unchanged) ───────────────────────────────────────────────
+
 function ProfileForm({ user }: { user: Record<string, unknown> }) {
   const tc = useTranslations('common')
   const [loading, setLoading] = useState(false)
@@ -291,6 +843,8 @@ function ProfileForm({ user }: { user: Record<string, unknown> }) {
     </>
   )
 }
+
+// ─── Two Factor Section (unchanged) ─────────────────────────────────────────
 
 function TwoFactorSection({ enabled }: { enabled: boolean }) {
   const tc = useTranslations('common')
@@ -410,6 +964,8 @@ function TwoFactorSection({ enabled }: { enabled: boolean }) {
     </div>
   )
 }
+
+// ─── Invoice Settings Form (unchanged) ──────────────────────────────────────
 
 function InvoiceSettingsForm({ org }: { org: Record<string, unknown> }) {
   const tc = useTranslations('common')

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   FileText,
+  FileMinus,
   Users,
   Clock,
   CreditCard,
@@ -17,17 +18,32 @@ import {
   Settings,
   LogOut,
   Building2,
+  FolderKanban,
+  Repeat,
+  Mail,
+  UserCheck,
+  CalendarDays,
+  Banknote,
+  ShoppingCart,
 } from 'lucide-react'
 
 const navItems = [
   { key: 'dashboard', href: '', icon: LayoutDashboard },
   { key: 'invoices', href: '/invoices', icon: FileText },
+  { key: 'subscriptions', href: '/subscriptions', icon: Repeat },
+  { key: 'orders', href: '/orders', icon: ShoppingCart },
+  { key: 'creditNotes', href: '/credit-notes', icon: FileMinus },
   { key: 'purchaseInvoices', href: '/purchase-invoices', icon: Receipt },
   { key: 'quotes', href: '/quotes', icon: FileCheck },
+  { key: 'projects', href: '/projects', icon: FolderKanban },
+  { key: 'emailLog', href: '/emails', icon: Mail },
   { key: 'clients', href: '/clients', icon: Users },
   { key: 'products', href: '/products', icon: Package },
   { key: 'timeTracking', href: '/time-tracking', icon: Clock },
   { key: 'punchCards', href: '/punch-cards', icon: CreditCard },
+  { key: 'employees', href: '/employees', icon: UserCheck },
+  { key: 'leave', href: '/leave', icon: CalendarDays },
+  { key: 'payroll', href: '/payroll', icon: Banknote },
   { key: 'reports', href: '/reports', icon: BarChart3 },
 ]
 

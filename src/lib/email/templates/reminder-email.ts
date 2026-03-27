@@ -19,11 +19,19 @@ export type ReminderEmailData = {
   totalIncVat: number
   daysPastDue: number
   reminderNumber: number
+  orgLogo?: string
+  brandColor?: string
 }
 
 export function reminderEmailHtml(data: ReminderEmailData): string {
   const urgency = data.reminderNumber >= 3 ? 'Laatste herinnering' :
     data.reminderNumber === 2 ? 'Tweede herinnering' : 'Herinnering'
+
+  const headerColor = data.reminderNumber >= 3
+    ? '#DC2626'
+    : data.reminderNumber === 2
+      ? (data.brandColor ? data.brandColor : '#F59E0B')
+      : '#F59E0B'
 
   return `
 <!DOCTYPE html>
@@ -34,8 +42,9 @@ export function reminderEmailHtml(data: ReminderEmailData): string {
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f5; }
     .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .header { background: ${data.reminderNumber >= 3 ? '#DC2626' : '#F59E0B'}; color: #fff; padding: 24px 32px; }
+    .header { background: ${headerColor}; color: #fff; padding: 24px 32px; }
     .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    .header .logo { max-height: 40px; margin-bottom: 8px; }
     .header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-top: 8px; }
     .content { padding: 32px; }
     .details { background: #f8f9fa; border-radius: 6px; padding: 20px; margin: 20px 0; }
@@ -50,6 +59,7 @@ export function reminderEmailHtml(data: ReminderEmailData): string {
 <body>
   <div class="container">
     <div class="header">
+      ${data.orgLogo ? `<img src="${data.orgLogo}" alt="${data.orgName}" class="logo">` : ''}
       <h1>${urgency}</h1>
       <div class="badge">Factuur ${data.invoiceNumber}</div>
     </div>

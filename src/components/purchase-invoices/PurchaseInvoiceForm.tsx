@@ -26,6 +26,8 @@ import {
   updatePurchaseInvoice,
   type PurchaseInvoiceFormData,
 } from '@/lib/actions/purchase-invoices'
+import { OcrUpload, OcrConfidenceBadge } from './OcrUpload'
+import type { OcrProcessResult } from '@/lib/actions/ocr'
 
 type PurchaseInvoiceFormProps = {
   open: boolean
@@ -53,6 +55,7 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [ocrResult, setOcrResult] = useState<OcrProcessResult | null>(null)
 
   const [supplier, setSupplier] = useState(editData?.supplier || '')
   const [supplierVatNumber, setSupplierVatNumber] = useState(editData?.supplierVatNumber || '')
@@ -86,6 +89,21 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
     setCategory(editData?.category || 'other')
     setNotes(editData?.notes || '')
   }, [editData])
+
+  function handleOcrResult(result: OcrProcessResult) {
+    setOcrResult(result)
+    if (result.success && result.ocrResult) {
+      const data = result.ocrResult.data
+      if (data.supplier) setSupplier(data.supplier)
+      if (data.supplierVatNumber) setSupplierVatNumber(data.supplierVatNumber)
+      if (data.supplierIban) setSupplierIban(data.supplierIban)
+      if (data.invoiceNumber) setInvoiceNumber(data.invoiceNumber)
+      if (data.issueDate) setIssueDate(data.issueDate)
+      if (data.dueDate) setDueDate(data.dueDate)
+      if (data.subtotal != null) setSubtotalEuros((data.subtotal / 100).toFixed(2))
+      if (data.vatAmount != null) setVatAmountEuros((data.vatAmount / 100).toFixed(2))
+    }
+  }
 
   // Auto-calculate totalIncVat when subtotal or vatAmount changes
   useEffect(() => {
@@ -141,6 +159,25 @@ export function PurchaseInvoiceForm({ open, onOpenChange, editData }: PurchaseIn
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
+            </div>
+          )}
+
+          {/* OCR Upload — only show for new invoices */}
+          {!isEdit && (
+            <div className="space-y-2">
+              <Label>{t('ocr.title')}</Label>
+              <OcrUpload onResult={handleOcrResult} />
+              {ocrResult?.success && ocrResult.ocrResult && (
+                <div className="flex items-center gap-2">
+                  <OcrConfidenceBadge
+                    confidence={ocrResult.ocrResult.confidence}
+                    score={ocrResult.ocrResult.confidenceScore}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {t('ocr.review')}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

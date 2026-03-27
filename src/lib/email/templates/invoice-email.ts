@@ -18,9 +18,13 @@ export type InvoiceEmailData = {
   dueDate: string
   totalIncVat: number
   notes?: string
+  orgLogo?: string
+  brandColor?: string
 }
 
 export function invoiceEmailHtml(data: InvoiceEmailData): string {
+  const brandColor = data.brandColor || '#2563EB'
+
   return `
 <!DOCTYPE html>
 <html>
@@ -30,8 +34,9 @@ export function invoiceEmailHtml(data: InvoiceEmailData): string {
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f5; }
     .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .header { background: #2563EB; color: #fff; padding: 24px 32px; }
+    .header { background: ${brandColor}; color: #fff; padding: 24px 32px; }
     .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    .header .logo { max-height: 40px; margin-bottom: 8px; }
     .content { padding: 32px; }
     .greeting { font-size: 16px; margin-bottom: 16px; }
     .details { background: #f8f9fa; border-radius: 6px; padding: 20px; margin: 20px 0; }
@@ -46,6 +51,7 @@ export function invoiceEmailHtml(data: InvoiceEmailData): string {
 <body>
   <div class="container">
     <div class="header">
+      ${data.orgLogo ? `<img src="${data.orgLogo}" alt="${data.orgName}" class="logo">` : ''}
       <h1>${data.orgName}</h1>
     </div>
     <div class="content">
