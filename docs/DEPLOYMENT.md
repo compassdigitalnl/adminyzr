@@ -85,9 +85,14 @@ NEXT_PUBLIC_SENTRY_DSN=<dsn-url>
 Stel in via Ploi > Server > Cron Jobs:
 
 ```
+# Abonnementsfacturen — dagelijks om 7:00
+0 7 * * * bash /home/ploi/adminyzr.compassdigital.nl/scripts/cron-jobs.sh subscriptions
+
 # Betalingsherinneringen — dagelijks om 9:00
-0 9 * * * curl -s "https://adminyzr.io/api/cron/reminders?key=<CRON_SECRET>"
+0 9 * * * bash /home/ploi/adminyzr.compassdigital.nl/scripts/cron-jobs.sh reminders
 ```
+
+Zie `docs/SETUP.md` voor volledige configuratie-instructies.
 
 ### Reverse proxy (Nginx)
 Ploi configureert Nginx automatisch. Zorg dat de site wijst naar port 3061.
