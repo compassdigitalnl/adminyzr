@@ -29,12 +29,25 @@ export async function GET(request: NextRequest) {
       r.status,
     ].join(';'))
 
-    // Summary rows
+    // Summary rows — Omzetbelasting
     rows.push('')
+    rows.push('OMZETBELASTING (verkoop)')
     rows.push(`Totaal;;;;;${(report.totalVatAmount / 100).toFixed(2)};${(report.totalIncVat / 100).toFixed(2)};`)
     rows.push(`BTW 21%:;;;;;${(report.totalVat21 / 100).toFixed(2)};;`)
     rows.push(`BTW 9%:;;;;;${(report.totalVat9 / 100).toFixed(2)};;`)
     rows.push(`BTW 0%:;;;;;${(report.totalVat0 / 100).toFixed(2)};;`)
+
+    // Voorbelasting
+    rows.push('')
+    rows.push('VOORBELASTING (inkoop)')
+    rows.push(`Totaal voorbelasting;;;;;${(report.purchaseVatTotal / 100).toFixed(2)};;${report.purchaseCount} inkoopfacturen`)
+    rows.push(`BTW 21%:;;;;;${(report.purchaseVat21 / 100).toFixed(2)};;`)
+    rows.push(`BTW 9%:;;;;;${(report.purchaseVat9 / 100).toFixed(2)};;`)
+    rows.push(`BTW 0%:;;;;;${(report.purchaseVat0 / 100).toFixed(2)};;`)
+
+    // Af te dragen
+    rows.push('')
+    rows.push(`AF TE DRAGEN BTW;;;;;${(report.vatToPay / 100).toFixed(2)};;`)
 
     const csv = [headers.join(';'), ...rows].join('\n')
 

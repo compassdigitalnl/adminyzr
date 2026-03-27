@@ -35,6 +35,14 @@ export type VatReportSummary = {
   totalIncVat: number
   invoiceCount: number
   rows: VatReportRow[]
+  // Voorbelasting (inkoopfacturen)
+  purchaseVat21: number
+  purchaseVat9: number
+  purchaseVat0: number
+  purchaseVatTotal: number
+  purchaseCount: number
+  // Afdracht berekening
+  vatToPay: number // omzetbelasting - voorbelasting
 }
 
 export async function getVatReport(params: {
@@ -108,6 +116,45 @@ export async function getVatReport(params: {
     })
   }
 
+  // Voorbelasting — inkoopfacturen in dezelfde periode
+  let purchaseVat21 = 0
+  let purchaseVat9 = 0
+  let purchaseVat0 = 0
+  let purchaseVatTotal = 0
+
+  const { docs: purchaseDocs } = await payload.find({
+    collection: 'purchase-invoices',
+    where: {
+      and: [
+        { organization: { equals: orgId } },
+        { deletedAt: { exists: false } },
+        { status: { in: ['approved', 'paid'] } },
+        { issueDate: { greater_than_equal: params.periodStart } },
+        { issueDate: { less_than_equal: params.periodEnd } },
+      ],
+    },
+    sort: 'issueDate',
+    limit: 1000,
+    overrideAccess: true,
+  })
+
+  for (const rawDoc of purchaseDocs) {
+    const doc = rawDoc as Record<string, unknown>
+    const subtotal = (doc.subtotal as number) || 0
+    const vatAmount = (doc.vatAmount as number) || 0
+
+    purchaseVatTotal += vatAmount
+
+    const vatRatio = subtotal > 0 ? vatAmount / subtotal : 0
+    if (vatRatio < 0.01) {
+      purchaseVat0 += vatAmount
+    } else if (vatRatio < 0.15) {
+      purchaseVat9 += vatAmount
+    } else {
+      purchaseVat21 += vatAmount
+    }
+  }
+
   return {
     totalSubtotal,
     totalVat21,
@@ -117,6 +164,12 @@ export async function getVatReport(params: {
     totalIncVat,
     invoiceCount: rows.length,
     rows,
+    purchaseVat21,
+    purchaseVat9,
+    purchaseVat0,
+    purchaseVatTotal,
+    purchaseCount: purchaseDocs.length,
+    vatToPay: totalVatAmount - purchaseVatTotal,
   }
 }
 
