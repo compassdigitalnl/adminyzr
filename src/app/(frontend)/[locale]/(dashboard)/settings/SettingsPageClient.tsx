@@ -931,6 +931,11 @@ function IntegrationsTab({ organization }: { organization: Record<string, unknow
   const subscriptionStatus = (organization.subscriptionStatus as string) || 'none'
   const stripeConnected = subscriptionStatus === 'active' || subscriptionStatus === 'trialing'
 
+  // Integration statuses are passed from server via organization config flags
+  const smtpConnected = (organization._integrations as Record<string, boolean> | undefined)?.smtp ?? false
+  const storageConnected = (organization._integrations as Record<string, boolean> | undefined)?.storage ?? false
+  const sityzrConnected = (organization._integrations as Record<string, boolean> | undefined)?.sityzr ?? false
+
   async function handleOpenBillingPortal() {
     setPortalLoading(true)
     try {
@@ -959,7 +964,7 @@ function IntegrationsTab({ organization }: { organization: Record<string, unknow
         <IntegrationCard
           icon={<CreditCard className="h-5 w-5 text-muted-foreground" />}
           name="Stripe"
-          description="Online betalingen en abonnementsbeheer voor je facturatie."
+          description="SaaS-abonnementsbeheer voor Adminyzr. Factuurbetalingen configureer je onder Betalingen."
           status={stripeConnected ? 'connected' : 'not_configured'}
           statusLabel={stripeConnected ? 'Actief' : 'Niet geconfigureerd'}
           action={
@@ -982,26 +987,26 @@ function IntegrationsTab({ organization }: { organization: Record<string, unknow
           icon={<Mail className="h-5 w-5 text-muted-foreground" />}
           name="E-mail (SMTP)"
           description="Verstuur facturen en offertes per e-mail vanuit Adminyzr."
-          status={process.env.NEXT_PUBLIC_SMTP_CONFIGURED === 'true' ? 'connected' : 'not_configured'}
-          statusLabel={process.env.NEXT_PUBLIC_SMTP_CONFIGURED === 'true' ? 'Geconfigureerd' : 'Niet geconfigureerd'}
+          status={smtpConnected ? 'connected' : 'not_configured'}
+          statusLabel={smtpConnected ? 'Geconfigureerd' : 'Niet geconfigureerd'}
         />
 
-        {/* Cloudflare R2 */}
+        {/* Cloudflare R2 / S3 Storage */}
         <IntegrationCard
           icon={<Cloud className="h-5 w-5 text-muted-foreground" />}
-          name="Cloudflare R2"
-          description="Bestandsopslag voor uploads, bijlagen en gegenereerde documenten."
-          status={process.env.NEXT_PUBLIC_R2_CONFIGURED === 'true' ? 'connected' : 'not_configured'}
-          statusLabel={process.env.NEXT_PUBLIC_R2_CONFIGURED === 'true' ? 'Geconfigureerd' : 'Niet geconfigureerd'}
+          name="Bestandsopslag (S3/R2)"
+          description="Cloud opslag voor uploads, bijlagen en gegenereerde documenten."
+          status={storageConnected ? 'connected' : 'not_configured'}
+          statusLabel={storageConnected ? 'Geconfigureerd' : 'Niet geconfigureerd'}
         />
 
         {/* Sityzr */}
         <IntegrationCard
           icon={<Globe className="h-5 w-5 text-muted-foreground" />}
           name="Sityzr"
-          description="Koppel je Sityzr website aan Adminyzr voor automatische synchronisatie van klanten en producten."
-          status="coming_soon"
-          statusLabel="Binnenkort beschikbaar"
+          description="Koppel je Sityzr website aan Adminyzr voor automatische synchronisatie van klanten, orders en producten."
+          status={sityzrConnected ? 'connected' : 'not_configured'}
+          statusLabel={sityzrConnected ? 'Geconfigureerd' : 'Niet geconfigureerd'}
         />
       </div>
     </div>
