@@ -61,6 +61,56 @@ export async function createBankAccount(data: {
   return { id: (doc as Record<string, unknown>).id }
 }
 
+export async function updateBankAccount(id: string, data: {
+  name?: string
+  iban?: string
+  bankName?: string
+  isDefault?: boolean
+}) {
+  const { payload, orgId } = await getAuthUser()
+  if (!orgId) throw new Error('Geen organisatie')
+
+  // Verify ownership
+  const existing = await payload.findByID({ collection: 'bank-accounts', id }) as Record<string, unknown>
+  const existingOrgId = typeof existing.organization === 'object'
+    ? (existing.organization as Record<string, unknown>).id as string
+    : existing.organization as string
+  if (existingOrgId !== orgId) throw new Error('Geen toegang')
+
+  await payload.update({
+    collection: 'bank-accounts',
+    id,
+    data: data as Record<string, unknown>,
+  })
+
+  // If setting as default, unset others
+  if (data.isDefault) {
+    const { docs } = await payload.find({
+      collection: 'bank-accounts',
+      where: {
+        organization: { equals: orgId },
+        id: { not_equals: id },
+        isDefault: { equals: true },
+        deletedAt: { exists: false },
+      },
+      limit: 50,
+      overrideAccess: true,
+    })
+    for (const doc of docs) {
+      await payload.update({
+        collection: 'bank-accounts',
+        id: doc.id as string,
+        data: { isDefault: false },
+        overrideAccess: true,
+      })
+    }
+  }
+
+  revalidatePath('/[locale]/bank', 'page')
+  revalidatePath('/[locale]/settings', 'page')
+  return { success: true }
+}
+
 export async function deleteBankAccount(id: string) {
   const { payload, orgId } = await getAuthUser()
   if (!orgId) throw new Error('Geen organisatie')

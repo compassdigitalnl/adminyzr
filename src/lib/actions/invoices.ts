@@ -244,6 +244,72 @@ export async function updateInvoice(id: string, data: InvoiceFormData) {
   return { success: true }
 }
 
+export async function duplicateInvoice(id: string) {
+  const payload = await getPayloadClient()
+  const cookieStore = await cookies()
+  const token = cookieStore.get('payload-token')?.value
+  if (!token) throw new Error('Niet ingelogd')
+
+  const { user } = await payload.auth({ headers: new Headers({ Authorization: `JWT ${token}` }) })
+  if (!user) throw new Error('Niet ingelogd')
+
+  const orgId = user.organization && typeof user.organization === 'object' ? user.organization.id : user.organization
+  if (!orgId) throw new Error('Geen organisatie')
+
+  // Fetch original invoice + items
+  const original = await payload.findByID({ collection: 'invoices', id, depth: 0 }) as Record<string, unknown>
+  const { docs: originalItems } = await payload.find({
+    collection: 'invoice-items',
+    where: { invoice: { equals: id } },
+    sort: 'sortOrder',
+    limit: 100,
+  })
+
+  const invoiceNumber = await generateInvoiceNumber(payload, orgId as string)
+  const today = new Date().toISOString().split('T')[0]
+  const dueDate = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+
+  // Create duplicate as draft
+  const duplicate = await payload.create({
+    collection: 'invoices',
+    data: {
+      organization: orgId,
+      invoiceNumber,
+      client: original.client,
+      type: 'invoice',
+      status: 'draft',
+      issueDate: today,
+      dueDate,
+      reference: original.reference,
+      notes: original.notes,
+      subtotal: 0,
+      vatAmount: 0,
+      totalIncVat: 0,
+    },
+  })
+
+  // Copy line items
+  for (let i = 0; i < originalItems.length; i++) {
+    const item = originalItems[i] as Record<string, unknown>
+    await payload.create({
+      collection: 'invoice-items',
+      data: {
+        invoice: duplicate.id,
+        product: item.product || undefined,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        vatRate: item.vatRate,
+        sortOrder: i,
+        lineTotal: 0,
+      },
+    })
+  }
+
+  revalidatePath('/[locale]/invoices', 'page')
+  return { invoiceId: String(duplicate.id), invoiceNumber }
+}
+
 export async function updateInvoiceStatus(id: string, status: string) {
   const payload = await getPayloadClient()
 
