@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { deleteProduct } from '@/lib/actions/products'
+import { ProductForm } from '@/components/products/ProductForm'
 import { formatCents } from '@/lib/utils'
 
 type Props = { product: Record<string, unknown>; locale: string }
@@ -14,6 +15,7 @@ type Props = { product: Record<string, unknown>; locale: string }
 export function ProductDetailClient({ product, locale }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
 
   async function handleDelete() {
     if (!confirm('Product verwijderen?')) return
@@ -35,7 +37,10 @@ export function ProductDetailClient({ product, locale }: Props) {
             {(product.isActive as boolean) !== false ? 'Actief' : 'Inactief'}
           </Badge>
         </div>
-        <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}><Trash2 className="mr-2 h-4 w-4" />Verwijderen</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-2 h-4 w-4" />Bewerken</Button>
+          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}><Trash2 className="mr-2 h-4 w-4" />Verwijderen</Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card p-6 shadow-sm">
@@ -47,6 +52,20 @@ export function ProductDetailClient({ product, locale }: Props) {
         </div>
         {(product.description as string) ? <div className="mt-4 pt-4 border-t"><p className="text-sm text-muted-foreground">{String(product.description)}</p></div> : null}
       </div>
+
+      <ProductForm
+        open={editOpen}
+        onOpenChange={(open) => { setEditOpen(open); if (!open) router.refresh() }}
+        editData={{
+          id: String(product.id),
+          name: (product.name as string) || '',
+          description: (product.description as string) || '',
+          unitPrice: (product.unitPrice as number) || 0,
+          vatRate: (product.vatRate as string) || '21',
+          unit: (product.unit as string) || '',
+          isActive: (product.isActive as boolean) !== false,
+        }}
+      />
     </div>
   )
 }

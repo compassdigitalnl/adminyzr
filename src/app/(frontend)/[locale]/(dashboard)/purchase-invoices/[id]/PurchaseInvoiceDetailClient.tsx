@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Check, X, Banknote, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, X, Banknote, Pencil, Trash2 } from 'lucide-react'
 import { approvePurchaseInvoice, rejectPurchaseInvoice, markPurchaseInvoicePaid, deletePurchaseInvoice } from '@/lib/actions/purchase-invoices'
 import { formatCents, formatDateShort } from '@/lib/utils'
+import { PurchaseInvoiceForm } from '@/components/purchase-invoices/PurchaseInvoiceForm'
 
 type Props = { doc: Record<string, unknown>; locale: string }
 
@@ -21,6 +22,7 @@ const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'success
 export function PurchaseInvoiceDetailClient({ doc, locale }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState('')
+  const [editOpen, setEditOpen] = useState(false)
   const status = (doc.status as string) || 'pending_review'
   const statusInfo = STATUS_BADGE[status] || STATUS_BADGE.pending_review
 
@@ -58,6 +60,7 @@ export function PurchaseInvoiceDetailClient({ doc, locale }: Props) {
             </>
           )}
           {status === 'approved' && <Button size="sm" onClick={() => handleAction('paid')} disabled={!!loading}><Banknote className="mr-2 h-4 w-4" />Betaald</Button>}
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-2 h-4 w-4" />Bewerken</Button>
           <Button variant="destructive" size="sm" onClick={() => handleAction('delete')} disabled={!!loading}><Trash2 className="mr-2 h-4 w-4" />Verwijderen</Button>
         </div>
       </div>
@@ -101,6 +104,28 @@ export function PurchaseInvoiceDetailClient({ doc, locale }: Props) {
           </div>
         </div>
       ) : null}
+
+      <PurchaseInvoiceForm
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open)
+          if (!open) router.refresh()
+        }}
+        editData={{
+          id: String(doc.id),
+          supplier: (doc.supplier as string) || '',
+          supplierVatNumber: (doc.supplierVatNumber as string) || '',
+          supplierIban: (doc.supplierIban as string) || '',
+          invoiceNumber: (doc.invoiceNumber as string) || '',
+          issueDate: (doc.issueDate as string) || '',
+          dueDate: (doc.dueDate as string) || '',
+          subtotal: (doc.subtotal as number) || 0,
+          vatAmount: (doc.vatAmount as number) || 0,
+          totalIncVat: (doc.totalIncVat as number) || 0,
+          category: (doc.category as string) || 'other',
+          notes: (doc.notes as string) || '',
+        }}
+      />
     </div>
   )
 }

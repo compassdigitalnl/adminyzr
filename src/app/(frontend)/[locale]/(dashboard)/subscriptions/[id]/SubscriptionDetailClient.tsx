@@ -5,11 +5,16 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Pause, Play, XCircle, FileText, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pause, Play, XCircle, FileText, Pencil, Trash2 } from 'lucide-react'
 import { pauseSubscription, resumeSubscription, cancelSubscription, generateSubscriptionInvoice, deleteSubscription } from '@/lib/actions/subscriptions'
 import { formatCents, formatDateShort } from '@/lib/utils'
+import { SubscriptionForm } from '../SubscriptionForm'
 
-type Props = { doc: Record<string, unknown>; locale: string }
+type Props = {
+  doc: Record<string, unknown>
+  locale: string
+  clients: Array<Record<string, unknown> & { id: string }>
+}
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'success' | 'destructive' | 'outline' | 'warning'; label: string }> = {
   active: { variant: 'success', label: 'Actief' },
@@ -18,9 +23,10 @@ const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'success
   expired: { variant: 'outline', label: 'Verlopen' },
 }
 
-export function SubscriptionDetailClient({ doc, locale }: Props) {
+export function SubscriptionDetailClient({ doc, locale, clients }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState('')
+  const [editOpen, setEditOpen] = useState(false)
   const status = (doc.status as string) || 'active'
   const statusInfo = STATUS_BADGE[status] || STATUS_BADGE.active
   const client = doc.client as Record<string, unknown> | undefined
@@ -66,6 +72,7 @@ export function SubscriptionDetailClient({ doc, locale }: Props) {
               <Button size="sm" variant="destructive" onClick={() => handleAction('cancel')} disabled={!!loading}><XCircle className="mr-2 h-4 w-4" />Opzeggen</Button>
             </>
           )}
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-2 h-4 w-4" />Bewerken</Button>
           <Button variant="outline" size="sm" onClick={() => handleAction('delete')} disabled={!!loading}><Trash2 className="mr-2 h-4 w-4" /></Button>
         </div>
       </div>
@@ -88,6 +95,27 @@ export function SubscriptionDetailClient({ doc, locale }: Props) {
           </div>
         </div>
       </div>
+
+      <SubscriptionForm
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open)
+          if (!open) router.refresh()
+        }}
+        clients={clients}
+        editData={{
+          id: String(doc.id),
+          client: client?.id ? { id: String(client.id) } : '',
+          name: (doc.name as string) || '',
+          description: (doc.description as string) || '',
+          interval: (doc.interval as string) || 'monthly',
+          amount: (doc.amount as number) || 0,
+          vatRate: (doc.vatRate as string) || '21',
+          startDate: (doc.startDate as string) || '',
+          endDate: (doc.endDate as string) || '',
+          autoSend: (doc.autoSend as boolean) || false,
+        }}
+      />
     </div>
   )
 }

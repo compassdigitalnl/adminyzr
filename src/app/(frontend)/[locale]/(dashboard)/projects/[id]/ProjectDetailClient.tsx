@@ -5,11 +5,16 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { deleteProject } from '@/lib/actions/projects'
 import { formatCents, formatDateShort } from '@/lib/utils'
+import { ProjectForm } from '@/components/projects/ProjectForm'
 
-type Props = { project: Record<string, unknown>; locale: string }
+type Props = {
+  project: Record<string, unknown>
+  locale: string
+  clients: Array<Record<string, unknown> & { id: string }>
+}
 
 const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'success' | 'warning' | 'outline'; label: string }> = {
   planning: { variant: 'secondary', label: 'Planning' },
@@ -19,9 +24,10 @@ const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'success
   cancelled: { variant: 'outline', label: 'Geannuleerd' },
 }
 
-export function ProjectDetailClient({ project, locale }: Props) {
+export function ProjectDetailClient({ project, locale, clients }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const status = (project.status as string) || 'planning'
   const statusInfo = STATUS_BADGE[status] || STATUS_BADGE.planning
   const client = project.client as Record<string, unknown> | undefined
@@ -44,7 +50,10 @@ export function ProjectDetailClient({ project, locale }: Props) {
           </div>
           <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
         </div>
-        <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}><Trash2 className="mr-2 h-4 w-4" />Verwijderen</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-2 h-4 w-4" />Bewerken</Button>
+          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}><Trash2 className="mr-2 h-4 w-4" />Verwijderen</Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -68,6 +77,25 @@ export function ProjectDetailClient({ project, locale }: Props) {
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{String(project.description)}</p>
         </div>
       ) : null}
+
+      <ProjectForm
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open)
+          if (!open) router.refresh()
+        }}
+        clients={clients}
+        editData={{
+          id: String(project.id),
+          name: (project.name as string) || '',
+          description: (project.description as string) || '',
+          client: client?.id ? String(client.id) : '',
+          status: (project.status as string) || 'planning',
+          priority: (project.priority as string) || 'medium',
+          budget: (project.budget as number) || 0,
+          deadline: (project.deadline as string) || '',
+        }}
+      />
     </div>
   )
 }
