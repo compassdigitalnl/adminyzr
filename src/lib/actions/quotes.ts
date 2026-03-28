@@ -132,6 +132,48 @@ export async function createQuote(data: QuoteFormData) {
   return result
 }
 
+export async function updateQuote(id: string, data: QuoteFormData) {
+  const { payload } = await getAuthUser()
+
+  const existing = await payload.findByID({ collection: 'quotes', id }) as Record<string, unknown>
+  if (existing.status !== 'draft') {
+    throw new Error('Alleen concept-offertes kunnen bewerkt worden')
+  }
+
+  // Update quote fields
+  await payload.update({
+    collection: 'quotes',
+    id,
+    data: {
+      client: data.client,
+      issueDate: data.issueDate,
+      validUntil: data.validUntil,
+      notes: data.notes,
+      // Recalculate totals
+      subtotal: data.items.reduce((sum, i) => sum + Math.round(i.quantity * i.unitPrice), 0),
+      vatAmount: data.items.reduce((sum, i) => {
+        const rates: Record<string, number> = { '21': 0.21, '9': 0.09, '0': 0, 'exempt': 0 }
+        return sum + Math.round(Math.round(i.quantity * i.unitPrice) * (rates[i.vatRate] || 0.21))
+      }, 0),
+      totalIncVat: data.items.reduce((sum, i) => {
+        const rates: Record<string, number> = { '21': 0.21, '9': 0.09, '0': 0, 'exempt': 0 }
+        const lineTotal = Math.round(i.quantity * i.unitPrice)
+        return sum + lineTotal + Math.round(lineTotal * (rates[i.vatRate] || 0.21))
+      }, 0),
+      items: data.items.map((item, idx) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        vatRate: item.vatRate,
+        sortOrder: idx,
+      })),
+    },
+  })
+
+  revalidatePath('/[locale]/quotes', 'page')
+  return { success: true }
+}
+
 export async function updateQuoteStatus(id: string, status: string) {
   const payload = await getPayloadClient()
   const result = await payload.update({

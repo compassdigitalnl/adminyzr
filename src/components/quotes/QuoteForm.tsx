@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatCents } from '@/lib/utils'
-import { createQuote, type QuoteLineItem } from '@/lib/actions/quotes'
+import { createQuote, updateQuote, type QuoteLineItem } from '@/lib/actions/quotes'
 
 type Client = {
   id: string
@@ -23,10 +23,20 @@ type Client = {
   contactName?: string
 }
 
+type EditData = {
+  id: string
+  client: string
+  issueDate: string
+  validUntil: string
+  notes?: string
+  items: QuoteLineItem[]
+}
+
 type QuoteFormProps = {
   clients: Client[]
   onSuccess: () => void
   onCancel: () => void
+  editData?: EditData
 }
 
 const VAT_RATES: Record<string, number> = {
@@ -45,20 +55,23 @@ function emptyItem(): QuoteLineItem {
   }
 }
 
-export function QuoteForm({ clients, onSuccess, onCancel }: QuoteFormProps) {
+export function QuoteForm({ clients, onSuccess, onCancel, editData }: QuoteFormProps) {
   const t = useTranslations('quotes')
   const tc = useTranslations('common')
+  const isEdit = !!editData
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const [clientId, setClientId] = useState('')
+  const [clientId, setClientId] = useState(editData?.client || '')
   const today = new Date().toISOString().split('T')[0]
   const defaultValidUntil = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
-  const [issueDate, setIssueDate] = useState(today)
-  const [validUntil, setValidUntil] = useState(defaultValidUntil)
-  const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<QuoteLineItem[]>([emptyItem()])
+  const [issueDate, setIssueDate] = useState(editData?.issueDate?.split('T')[0] || today)
+  const [validUntil, setValidUntil] = useState(editData?.validUntil?.split('T')[0] || defaultValidUntil)
+  const [notes, setNotes] = useState(editData?.notes || '')
+  const [items, setItems] = useState<QuoteLineItem[]>(
+    editData?.items && editData.items.length > 0 ? editData.items : [emptyItem()]
+  )
 
   // Calculated totals
   const [subtotal, setSubtotal] = useState(0)
@@ -114,13 +127,19 @@ export function QuoteForm({ clients, onSuccess, onCancel }: QuoteFormProps) {
     }
 
     try {
-      await createQuote({
+      const quoteData = {
         client: clientId,
         issueDate,
         validUntil,
         notes: notes || undefined,
         items: items.filter((i) => i.description),
-      })
+      }
+
+      if (isEdit && editData) {
+        await updateQuote(editData.id, quoteData)
+      } else {
+        await createQuote(quoteData)
+      }
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : tc('error'))
