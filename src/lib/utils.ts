@@ -5,10 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCents(cents: number): string {
+export function formatCents(cents: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
-    currency: 'EUR',
+    currency,
   }).format(cents / 100)
 }
 
