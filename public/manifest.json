@@ -1,0 +1,17 @@
+{
+  "name": "Adminyzr",
+  "short_name": "Adminyzr",
+  "description": "Business Operations Platform — Facturatie, CRM, Projecten",
+  "start_url": "/nl",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#2563EB",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

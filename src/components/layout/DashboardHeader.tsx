@@ -66,14 +66,16 @@ export function DashboardHeader() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-30 flex h-header items-center justify-between border-b border-[var(--border)] bg-[var(--bg-card)] px-6">
-      <div>
+    <header className="sticky top-0 z-30 flex h-header items-center justify-between border-b border-[var(--border)] bg-[var(--bg-card)] px-4 lg:px-6">
+      <div className="hidden lg:block">
         <h2 className="text-[15px] font-bold text-[var(--text-primary)]">Dashboard</h2>
       </div>
+      {/* Spacer for mobile hamburger button */}
+      <div className="w-10 lg:hidden" />
 
       <div className="flex items-center gap-1.5">
         {/* Search */}
-        <div ref={searchRef} className="relative min-w-[280px]">
+        <div ref={searchRef} className="relative min-w-0 w-full max-w-[280px]">
           <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"

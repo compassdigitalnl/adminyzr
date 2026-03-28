@@ -15,9 +15,9 @@ export default function DashboardLayout({
       <CommandPalette />
       <div className="flex min-h-screen bg-[var(--bg-base)]">
         <Sidebar />
-        <main className="ml-sidebar flex flex-1 flex-col min-h-screen">
+        <main className="lg:ml-sidebar flex flex-1 flex-col min-h-screen">
           <DashboardHeader />
-          <div className="flex-1 p-6 max-w-content">
+          <div className="flex-1 p-4 lg:p-6 max-w-content">
             {children}
           </div>
         </main>

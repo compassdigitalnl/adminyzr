@@ -19,6 +19,14 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Adminyzr',
   description: 'Business Operations Platform',
+  manifest: '/manifest.json',
+  themeColor: '#2563EB',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 }
 
 type Props = {
