@@ -231,9 +231,13 @@ export function InvoicesPageClient({
                 initialData.docs.map((invoice) => {
                   const statusInfo = STATUS_BADGE[invoice.status || 'draft'] || STATUS_BADGE.draft
                   return (
-                    <tr key={invoice.id} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr
+                      key={invoice.id}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => router.push(`${pathname}/${invoice.id}`)}
+                    >
                       <td className="px-4 py-3">
-                        <span className="font-mono font-medium">{invoice.invoiceNumber || '—'}</span>
+                        <span className="font-mono font-medium text-primary hover:underline">{invoice.invoiceNumber || '—'}</span>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {invoice.client ? getClientName(invoice.client) : '—'}
@@ -250,7 +254,7 @@ export function InvoicesPageClient({
                       <td className="px-4 py-3 text-center">
                         <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {/* Draft: edit, send, delete */}
                           {invoice.status === 'draft' && (
