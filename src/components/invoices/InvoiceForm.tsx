@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatCents } from '@/lib/utils'
-import { createInvoice, type InvoiceItemFormData } from '@/lib/actions/invoices'
+import { createInvoice, updateInvoice, type InvoiceItemFormData } from '@/lib/actions/invoices'
 
 type Client = {
   id: string
@@ -31,11 +31,22 @@ type Product = {
   unit: string
 }
 
+type EditData = {
+  id: string
+  client: string
+  issueDate: string
+  dueDate: string
+  reference?: string
+  notes?: string
+  items: InvoiceItemFormData[]
+}
+
 type InvoiceFormProps = {
   clients: Client[]
   products: Product[]
   onSuccess: () => void
   onCancel: () => void
+  editData?: EditData
 }
 
 const VAT_RATES: Record<string, number> = {
@@ -54,21 +65,24 @@ function emptyItem(): InvoiceItemFormData {
   }
 }
 
-export function InvoiceForm({ clients, products, onSuccess, onCancel }: InvoiceFormProps) {
+export function InvoiceForm({ clients, products, onSuccess, onCancel, editData }: InvoiceFormProps) {
   const t = useTranslations('invoices')
   const tc = useTranslations('common')
+  const isEdit = !!editData
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const [clientId, setClientId] = useState('')
+  const [clientId, setClientId] = useState(editData?.client || '')
   const today = new Date().toISOString().split('T')[0]
   const defaultDue = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
-  const [issueDate, setIssueDate] = useState(today)
-  const [dueDate, setDueDate] = useState(defaultDue)
-  const [reference, setReference] = useState('')
-  const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<InvoiceItemFormData[]>([emptyItem()])
+  const [issueDate, setIssueDate] = useState(editData?.issueDate?.split('T')[0] || today)
+  const [dueDate, setDueDate] = useState(editData?.dueDate?.split('T')[0] || defaultDue)
+  const [reference, setReference] = useState(editData?.reference || '')
+  const [notes, setNotes] = useState(editData?.notes || '')
+  const [items, setItems] = useState<InvoiceItemFormData[]>(
+    editData?.items && editData.items.length > 0 ? editData.items : [emptyItem()]
+  )
 
   // Calculated totals
   const [subtotal, setSubtotal] = useState(0)
@@ -140,14 +154,20 @@ export function InvoiceForm({ clients, products, onSuccess, onCancel }: InvoiceF
     }
 
     try {
-      await createInvoice({
+      const invoiceData = {
         client: clientId,
         issueDate,
         dueDate,
         reference: reference || undefined,
         notes: notes || undefined,
         items: items.filter((i) => i.description),
-      })
+      }
+
+      if (isEdit && editData) {
+        await updateInvoice(editData.id, invoiceData)
+      } else {
+        await createInvoice(invoiceData)
+      }
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : tc('error'))

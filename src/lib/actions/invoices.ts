@@ -189,6 +189,61 @@ export async function createInvoice(data: InvoiceFormData) {
   return invoice
 }
 
+export async function updateInvoice(id: string, data: InvoiceFormData) {
+  const payload = await getPayloadClient()
+
+  // Only draft invoices can be edited
+  const existing = await payload.findByID({ collection: 'invoices', id }) as Record<string, unknown>
+  if (existing.status !== 'draft') {
+    throw new Error('Alleen concept-facturen kunnen bewerkt worden')
+  }
+
+  // Update invoice fields
+  await payload.update({
+    collection: 'invoices',
+    id,
+    data: {
+      client: data.client,
+      issueDate: data.issueDate,
+      dueDate: data.dueDate,
+      reference: data.reference,
+      notes: data.notes,
+    },
+  })
+
+  // Delete existing items and recreate
+  const { docs: existingItems } = await payload.find({
+    collection: 'invoice-items',
+    where: { invoice: { equals: id } },
+    limit: 100,
+  })
+
+  for (const item of existingItems) {
+    await payload.delete({ collection: 'invoice-items', id: item.id as string })
+  }
+
+  // Create new items
+  for (let i = 0; i < data.items.length; i++) {
+    const item = data.items[i]
+    await payload.create({
+      collection: 'invoice-items',
+      data: {
+        invoice: id,
+        product: item.product || undefined,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        vatRate: item.vatRate,
+        sortOrder: i,
+        lineTotal: 0,
+      },
+    })
+  }
+
+  revalidatePath('/[locale]/invoices', 'page')
+  return { success: true }
+}
+
 export async function updateInvoiceStatus(id: string, status: string) {
   const payload = await getPayloadClient()
 
