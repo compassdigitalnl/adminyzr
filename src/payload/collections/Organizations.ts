@@ -145,6 +145,44 @@ export const Organizations: CollectionConfig = {
         },
       ],
     },
+    // Email templates
+    {
+      name: 'emailTemplates',
+      type: 'group',
+      label: 'E-mail templates',
+      fields: [
+        {
+          name: 'invoiceSubject',
+          type: 'text',
+          label: 'Factuur onderwerp',
+          admin: { description: 'Variabelen: {invoiceNumber}, {orgName}. Standaard: "Factuur {invoiceNumber} — {orgName}"', placeholder: 'Factuur {invoiceNumber} — {orgName}' },
+        },
+        {
+          name: 'invoiceGreeting',
+          type: 'textarea',
+          label: 'Factuur begroeting',
+          admin: { description: 'Variabelen: {clientName}, {invoiceNumber}. Standaard: "Hierbij ontvangt u factuur {invoiceNumber}."' },
+        },
+        {
+          name: 'invoiceFooter',
+          type: 'textarea',
+          label: 'Factuur afsluiting',
+          admin: { description: 'Tekst onder de factuurdetails. Standaard: "Wij verzoeken u vriendelijk het bedrag voor de vervaldatum over te maken."' },
+        },
+        {
+          name: 'reminderSubject',
+          type: 'text',
+          label: 'Herinnering onderwerp',
+          admin: { placeholder: 'Herinnering: Factuur {invoiceNumber} — {orgName}' },
+        },
+        {
+          name: 'reminderBody',
+          type: 'textarea',
+          label: 'Herinnering tekst',
+          admin: { description: 'Variabelen: {clientName}, {invoiceNumber}, {amount}, {dueDate}, {daysPastDue}' },
+        },
+      ],
+    },
     // Stripe billing fields
     {
       name: 'stripeCustomerId',
