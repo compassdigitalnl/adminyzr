@@ -35,6 +35,7 @@ import { Transactions } from './payload/collections/Transactions'
 import { BankAccounts } from './payload/collections/BankAccounts'
 import { BankTransactions } from './payload/collections/BankTransactions'
 import { Notifications } from './payload/collections/Notifications'
+import { WebhookSubscriptions } from './payload/collections/WebhookSubscriptions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -83,6 +84,7 @@ export default buildConfig({
     BankAccounts,
     BankTransactions,
     Notifications,
+    WebhookSubscriptions,
   ],
 
   db: postgresAdapter({
