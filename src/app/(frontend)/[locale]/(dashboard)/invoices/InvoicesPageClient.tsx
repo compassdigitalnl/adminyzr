@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Plus, Search, Filter, Send, Check, Download } from 'lucide-react'
+import { Plus, Search, Filter, Send, Check, Download, Pencil, Trash2, Bell, MoreHorizontal, Copy, FileMinus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { updateInvoiceStatus } from '@/lib/actions/invoices'
+import { updateInvoiceStatus, deleteInvoice } from '@/lib/actions/invoices'
 import { sendInvoiceEmail } from '@/lib/actions/email'
 import { formatCents, formatDateShort } from '@/lib/utils'
 import Link from 'next/link'
@@ -129,6 +129,21 @@ export function InvoicesPageClient({
     router.refresh()
   }
 
+  async function handleSendReminder(id: string) {
+    try {
+      await sendInvoiceEmail(id)
+    } catch {
+      // Ignore
+    }
+    router.refresh()
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) return
+    await deleteInvoice(id)
+    router.refresh()
+  }
+
   function getClientName(client: Invoice['client']): string {
     if (typeof client === 'object' && client !== null) {
       return client.companyName
@@ -237,39 +252,47 @@ export function InvoicesPageClient({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {/* Draft: edit, send, delete */}
                           {invoice.status === 'draft' && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title={t('sendInvoice')}
-                              onClick={() => handleMarkSent(invoice.id)}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Link href={`${pathname}/${invoice.id}/edit`}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Bewerken">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title={t('sendInvoice')} onClick={() => handleMarkSent(invoice.id)}>
+                                <Send className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Verwijderen" onClick={() => handleDelete(invoice.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
+                          {/* Sent: mark paid, send reminder */}
                           {invoice.status === 'sent' && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title={t('markPaid')}
-                              onClick={() => handleMarkPaid(invoice.id)}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title={t('markPaid')} onClick={() => handleMarkPaid(invoice.id)}>
+                                <Check className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Herinnering sturen" onClick={() => handleSendReminder(invoice.id)}>
+                                <Bell className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
-                          <a
-                            href={`/api/invoices/${invoice.id}/pdf`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title={t('downloadPdf')}
-                            >
+                          {/* Overdue: mark paid, send reminder */}
+                          {invoice.status === 'overdue' && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title={t('markPaid')} onClick={() => handleMarkPaid(invoice.id)}>
+                                <Check className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Aanmaning sturen" onClick={() => handleSendReminder(invoice.id)}>
+                                <Bell className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </>
+                          )}
+                          {/* Always: download PDF */}
+                          <a href={`/api/invoices/${invoice.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" title={t('downloadPdf')}>
                               <Download className="h-4 w-4" />
                             </Button>
                           </a>
