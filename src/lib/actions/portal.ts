@@ -29,6 +29,8 @@ export async function getPortalInvoices(clientId: string) {
       dueDate: inv.dueDate as string,
       totalIncVat: inv.totalIncVat as number,
       status: inv.status as string,
+      paymentUrl: (inv.paymentUrl as string) || undefined,
+      pdfUrl: `/api/invoices/${doc.id}/pdf`,
     }
   })
 }
