@@ -5,14 +5,20 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, CalendarDays, Clock } from 'lucide-react'
 import { deleteEmployee } from '@/lib/actions/employees'
 import { formatCents, formatDateShort } from '@/lib/utils'
 import { EmployeeForm } from '@/components/employees/EmployeeForm'
 
-type Props = { employee: Record<string, unknown>; locale: string }
+type EmployeeStats = {
+  leaveRequests: { id: string; type: string; startDate: string; endDate: string; days: number; status: string }[]
+  leaveSummary: { approvedDays: number; pendingDays: number; totalRequests: number }
+  timeSummary: { totalHours: number; thisMonthHours: number }
+} | null
 
-export function EmployeeDetailClient({ employee, locale }: Props) {
+type Props = { employee: Record<string, unknown>; locale: string; stats?: EmployeeStats }
+
+export function EmployeeDetailClient({ employee, locale, stats }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -69,6 +75,54 @@ export function EmployeeDetailClient({ employee, locale }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Verlof + Uren overzicht */}
+      {stats && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1"><CalendarDays className="h-4 w-4" /><span className="text-sm">Verlof goedgekeurd</span></div>
+            <p className="text-xl font-bold">{stats.leaveSummary.approvedDays} dagen</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1"><CalendarDays className="h-4 w-4" /><span className="text-sm">Verlof aangevraagd</span></div>
+            <p className="text-xl font-bold text-amber-600">{stats.leaveSummary.pendingDays} dagen</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1"><Clock className="h-4 w-4" /><span className="text-sm">Uren deze maand</span></div>
+            <p className="text-xl font-mono font-bold">{stats.timeSummary.thisMonthHours.toFixed(1)}h</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1"><Clock className="h-4 w-4" /><span className="text-sm">Uren totaal</span></div>
+            <p className="text-xl font-mono font-bold">{stats.timeSummary.totalHours.toFixed(1)}h</p>
+          </div>
+        </div>
+      )}
+
+      {/* Verlofaanvragen */}
+      {stats && stats.leaveRequests.length > 0 && (
+        <div className="rounded-lg border bg-card shadow-sm">
+          <div className="px-6 py-4 border-b flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <h2 className="font-semibold">Verlofaanvragen ({stats.leaveSummary.totalRequests})</h2>
+          </div>
+          <table className="w-full text-sm">
+            <tbody>
+              {stats.leaveRequests.slice(0, 10).map((req) => (
+                <tr key={req.id} className="border-b last:border-0">
+                  <td className="px-6 py-2 capitalize">{req.type}</td>
+                  <td className="px-6 py-2">{formatDateShort(req.startDate)} — {formatDateShort(req.endDate)}</td>
+                  <td className="px-6 py-2 text-right">{req.days} dagen</td>
+                  <td className="px-6 py-2 text-right">
+                    <Badge variant={req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'destructive'}>
+                      {req.status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <EmployeeForm
         open={editOpen}
