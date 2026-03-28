@@ -21,6 +21,8 @@ export type InvoiceEmailData = {
   orgLogo?: string
   brandColor?: string
   paymentUrl?: string
+  customGreeting?: string
+  customFooter?: string
 }
 
 export function invoiceEmailHtml(data: InvoiceEmailData): string {
@@ -57,7 +59,12 @@ export function invoiceEmailHtml(data: InvoiceEmailData): string {
     </div>
     <div class="content">
       <p class="greeting">Beste ${data.clientName},</p>
-      <p>Hierbij ontvangt u factuur <strong>${data.invoiceNumber}</strong>. In de bijlage vindt u de factuur als PDF.</p>
+      <p>${data.customGreeting
+        ? data.customGreeting
+            .replace('{clientName}', data.clientName)
+            .replace('{invoiceNumber}', data.invoiceNumber)
+        : `Hierbij ontvangt u factuur <strong>${data.invoiceNumber}</strong>. In de bijlage vindt u de factuur als PDF.`
+      }</p>
 
       <div class="details">
         <div class="detail-row">

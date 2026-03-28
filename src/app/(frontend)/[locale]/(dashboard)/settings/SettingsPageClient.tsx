@@ -1226,6 +1226,8 @@ function TwoFactorSection({ enabled }: { enabled: boolean }) {
   const tc = useTranslations('common')
   const [is2FAEnabled, setIs2FAEnabled] = useState(enabled)
   const [showSetup, setShowSetup] = useState(false)
+  const [showBackupCodes, setShowBackupCodes] = useState(false)
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
   const [qrCode, setQrCode] = useState('')
   const [secret, setSecret] = useState('')
   const [verifyCode, setVerifyCode] = useState('')
@@ -1256,6 +1258,10 @@ function TwoFactorSection({ enabled }: { enabled: boolean }) {
         setIs2FAEnabled(true)
         setShowSetup(false)
         setVerifyCode('')
+        if (result.backupCodes) {
+          setBackupCodes(result.backupCodes)
+          setShowBackupCodes(true)
+        }
       } else {
         setError(result.error || 'Verificatie mislukt')
       }
@@ -1328,6 +1334,30 @@ function TwoFactorSection({ enabled }: { enabled: boolean }) {
           </div>
           <Button variant="outline" onClick={() => setShowSetup(false)}>
             {tc('cancel')}
+          </Button>
+        </div>
+      )}
+
+      {showBackupCodes && backupCodes.length > 0 && (
+        <div className="rounded-lg border bg-amber-50 p-4 space-y-3">
+          <h3 className="font-semibold text-amber-900">Bewaar je backup codes</h3>
+          <p className="text-sm text-amber-700">
+            Gebruik deze eenmalige codes als je geen toegang hebt tot je authenticator app. Elke code werkt maar één keer.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {backupCodes.map((code, i) => (
+              <code key={i} className="rounded bg-white px-3 py-1.5 text-sm font-mono text-center border">
+                {code}
+              </code>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => {
+            navigator.clipboard.writeText(backupCodes.join('\n'))
+          }}>
+            Kopieer alle codes
+          </Button>
+          <Button variant="outline" size="sm" className="ml-2" onClick={() => setShowBackupCodes(false)}>
+            Ik heb ze opgeslagen
           </Button>
         </div>
       )}

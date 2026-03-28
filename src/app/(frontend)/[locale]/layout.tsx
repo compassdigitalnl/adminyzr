@@ -45,6 +45,11 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){try{var t=document.cookie.match(/theme=([^;]+)/);var v=t?t[1]:'system';if(v==='dark'||(v==='system'&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()
+        `}} />
+      </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages}>
           {children}

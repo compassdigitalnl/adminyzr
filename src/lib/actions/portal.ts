@@ -140,11 +140,15 @@ export async function getPortalClient(clientId: string) {
     })
 
     const data = client as Record<string, unknown>
+    const orgId = typeof data.organization === 'object'
+      ? (data.organization as Record<string, unknown>).id
+      : data.organization
     return {
       id: client.id,
       companyName: data.companyName as string,
       contactName: data.contactName as string | undefined,
       email: data.email as string,
+      organizationId: orgId,
     }
   } catch {
     return null

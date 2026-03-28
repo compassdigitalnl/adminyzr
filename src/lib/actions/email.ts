@@ -112,6 +112,12 @@ export async function sendInvoiceEmail(invoiceId: string) {
     // Payment link creation failure should not block invoice sending
   }
 
+  // Get org branding and email templates
+  const branding = org.branding as Record<string, unknown> | undefined
+  const emailTemplates = org.emailTemplates as Record<string, unknown> | undefined
+  const logoAttachment = branding?.logo as Record<string, unknown> | undefined
+  const logoUrl = logoAttachment?.url as string | undefined
+
   // Build email
   const emailData: InvoiceEmailData = {
     orgName: (org.name as string) || 'Adminyzr',
@@ -122,11 +128,18 @@ export async function sendInvoiceEmail(invoiceId: string) {
     totalIncVat: (invoice.totalIncVat as number) || 0,
     notes: invoice.notes as string | undefined,
     paymentUrl,
+    orgLogo: logoUrl ? `${process.env.NEXT_PUBLIC_APP_URL}${logoUrl}` : undefined,
+    brandColor: (branding?.primaryColor as string) || undefined,
+    customGreeting: emailTemplates?.invoiceGreeting as string | undefined,
+    customFooter: emailTemplates?.invoiceFooter as string | undefined,
   }
 
   const transporter = getMailTransporter()
 
-  const emailSubject = `Factuur ${emailData.invoiceNumber} — ${emailData.orgName}`
+  const customSubject = emailTemplates?.invoiceSubject as string | undefined
+  const emailSubject = customSubject
+    ? customSubject.replace('{invoiceNumber}', emailData.invoiceNumber).replace('{orgName}', emailData.orgName)
+    : `Factuur ${emailData.invoiceNumber} — ${emailData.orgName}`
   const recipientEmail = client.email as string
 
   try {

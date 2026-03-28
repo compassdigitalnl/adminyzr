@@ -23,7 +23,17 @@ type Props = {
 
 export function OnboardingChecklist({ orgName, hasClients, hasInvoices, hasPaymentProvider, hasSmtp }: Props) {
   const router = useRouter()
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('onboarding-dismissed') === 'true'
+    }
+    return false
+  })
+
+  function dismiss() {
+    setDismissed(true)
+    localStorage.setItem('onboarding-dismissed', 'true')
+  }
 
   const items: ChecklistItem[] = [
     {
@@ -80,7 +90,7 @@ export function OnboardingChecklist({ orgName, hasClients, hasInvoices, hasPayme
           <h3 className="font-semibold">Aan de slag</h3>
           <p className="text-sm text-muted-foreground">{doneCount} van {items.length} stappen voltooid</p>
         </div>
-        <button onClick={() => setDismissed(true)} className="text-muted-foreground hover:text-foreground">
+        <button onClick={dismiss} className="text-muted-foreground hover:text-foreground">
           <X className="h-4 w-4" />
         </button>
       </div>
