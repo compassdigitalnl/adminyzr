@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, Search, Filter, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -82,6 +82,7 @@ export function EmployeesPageClient({
   translations,
 }: EmployeesPageClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParamsHook = useSearchParams()
   const t = useTranslations('employees')
   const tc = useTranslations('common')
@@ -222,7 +223,7 @@ export function EmployeesPageClient({
                 initialData.docs.map((employee) => {
                   const typeInfo = TYPE_BADGE[employee.employmentType || 'fulltime'] || TYPE_BADGE.fulltime
                   return (
-                    <tr key={employee.id} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr key={employee.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`${pathname}/${employee.id}`)}>
                       <td className="px-4 py-3">
                         <span className="font-medium">
                           {employee.firstName} {employee.lastName}

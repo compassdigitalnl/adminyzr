@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -50,6 +50,7 @@ const UNIT_LABELS: Record<string, string> = {
 
 export function ProductsPageClient({ initialData, initialSearch, translations }: ProductsPageClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParamsHook = useSearchParams()
   const tc = useTranslations('common')
   const t = useTranslations('products')
@@ -157,7 +158,7 @@ export function ProductsPageClient({ initialData, initialSearch, translations }:
                 </tr>
               ) : (
                 initialData.docs.map((product) => (
-                  <tr key={product.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <tr key={product.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`${pathname}/${product.id}`)}>
                     <td className="px-4 py-3">
                       <span className="font-medium">{product.name || '—'}</span>
                       {product.description && (

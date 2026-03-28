@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Search, FileText, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -64,6 +64,7 @@ export function OrdersPageClient({
   translations,
 }: OrdersPageClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParamsHook = useSearchParams()
   const tc = useTranslations('common')
   const t = useTranslations('orders')
@@ -222,7 +223,7 @@ export function OrdersPageClient({
                 </tr>
               ) : (
                 initialData.docs.map((order) => (
-                  <tr key={order.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <tr key={order.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`${pathname}/${order.id}`)}>
                     <td className="px-4 py-3">
                       <span className="font-medium font-mono text-sm">{order.externalOrderId || '\u2014'}</span>
                     </td>

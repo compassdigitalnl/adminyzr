@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, Search, Pencil, Trash2, Pause, Play, XCircle, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -80,6 +80,7 @@ export function SubscriptionsPageClient({
   translations,
 }: SubscriptionsPageClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParamsHook = useSearchParams()
   const tc = useTranslations('common')
   const t = useTranslations('subscriptions')
@@ -270,7 +271,7 @@ export function SubscriptionsPageClient({
                 </tr>
               ) : (
                 initialData.docs.map((sub) => (
-                  <tr key={sub.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <tr key={sub.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`${pathname}/${sub.id}`)}>
                     <td className="px-4 py-3">
                       <span className="font-medium">{sub.name || '—'}</span>
                       {sub.description && (

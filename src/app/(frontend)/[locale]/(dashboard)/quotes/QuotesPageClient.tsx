@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, Search, MoreHorizontal, Send, CheckCircle, FileText, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -68,6 +68,7 @@ export function QuotesPageClient({
   const t = useTranslations('quotes')
   const tc = useTranslations('common')
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const [data] = useState<QuotesData>(initialData)
@@ -279,7 +280,7 @@ export function QuotesPageClient({
                   {data.docs.map((quote) => {
                     const quoteStatus = (quote.status as string) || 'draft'
                     return (
-                      <tr key={quote.id} className="hover:bg-muted/30">
+                      <tr key={quote.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => router.push(`${pathname}/${quote.id}`)}>
                         <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                           {(quote.quoteNumber as string) || '—'}
                         </td>

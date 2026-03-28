@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, Search, Filter, Check, X, Banknote, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -84,6 +84,7 @@ export function PurchaseInvoicesPageClient({
   translations,
 }: PurchaseInvoicesPageClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParamsHook = useSearchParams()
   const t = useTranslations('purchaseInvoices')
   const tc = useTranslations('common')
@@ -245,7 +246,7 @@ export function PurchaseInvoicesPageClient({
                   const statusInfo = STATUS_BADGE[invoice.status || 'pending_review'] || STATUS_BADGE.pending_review
                   const categoryKey = CATEGORY_KEYS[invoice.category || 'other'] || 'other'
                   return (
-                    <tr key={invoice.id} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr key={invoice.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`${pathname}/${invoice.id}`)}>
                       <td className="px-4 py-3">
                         <span className="font-medium">{invoice.supplier || '—'}</span>
                       </td>

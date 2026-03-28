@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, Search, Filter, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -77,6 +77,7 @@ export function ProjectsPageClient({
   translations,
 }: ProjectsPageClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParamsHook = useSearchParams()
   const t = useTranslations('projects')
   const tc = useTranslations('common')
@@ -227,7 +228,7 @@ export function ProjectsPageClient({
                   const statusInfo = STATUS_BADGE[project.status || 'planning'] || STATUS_BADGE.planning
                   const priorityInfo = PRIORITY_BADGE[project.priority || 'medium'] || PRIORITY_BADGE.medium
                   return (
-                    <tr key={project.id} className="border-b hover:bg-muted/30 transition-colors">
+                    <tr key={project.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`${pathname}/${project.id}`)}>
                       <td className="px-4 py-3">
                         <span className="font-medium">{project.name || '\u2014'}</span>
                       </td>
