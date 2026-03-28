@@ -4,6 +4,7 @@ import { hasRoleInTenant } from '../access/hasRole'
 import { setOrganization } from '../hooks/setOrganization'
 import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
 import { preventMutationAfterSend } from '../hooks/preventMutationAfterSend'
+import { dispatchEvents } from '../hooks/eventDispatcher'
 
 export const Invoices: CollectionConfig = {
   slug: 'invoices',
@@ -20,7 +21,7 @@ export const Invoices: CollectionConfig = {
   hooks: {
     beforeValidate: [setOrganization],
     beforeChange: [preventMutationAfterSend],
-    afterChange: [logAfterChange],
+    afterChange: [logAfterChange, dispatchEvents],
     afterDelete: [logAfterDelete],
   },
   fields: [

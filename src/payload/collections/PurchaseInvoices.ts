@@ -3,6 +3,7 @@ import { tenantIsolation } from '../access/tenantIsolation'
 import { hasRoleInTenant } from '../access/hasRole'
 import { setOrganization } from '../hooks/setOrganization'
 import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
+import { dispatchEvents } from '../hooks/eventDispatcher'
 import { validateIban } from '../hooks/validateIban'
 
 export const PurchaseInvoices: CollectionConfig = {
@@ -19,7 +20,7 @@ export const PurchaseInvoices: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [setOrganization, validateIban],
-    afterChange: [logAfterChange],
+    afterChange: [logAfterChange, dispatchEvents],
     afterDelete: [logAfterDelete],
   },
   fields: [

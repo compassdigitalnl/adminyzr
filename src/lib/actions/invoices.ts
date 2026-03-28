@@ -130,6 +130,10 @@ async function generateInvoiceNumber(payload: Awaited<ReturnType<typeof getPaylo
 }
 
 export async function createInvoice(data: InvoiceFormData) {
+  // Feature gate: check invoice limit
+  const { requireWithinLimit } = await import('@/lib/check-feature')
+  await requireWithinLimit('invoicesPerMonth')
+
   const payload = await getPayloadClient()
   const cookieStore = await cookies()
   const token = cookieStore.get('payload-token')?.value

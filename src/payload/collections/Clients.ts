@@ -3,6 +3,7 @@ import { tenantIsolation } from '../access/tenantIsolation'
 import { hasRoleInTenant } from '../access/hasRole'
 import { setOrganization } from '../hooks/setOrganization'
 import { logAfterChange, logAfterDelete } from '../hooks/auditLog'
+import { dispatchEvents } from '../hooks/eventDispatcher'
 
 export const Clients: CollectionConfig = {
   slug: 'clients',
@@ -18,7 +19,7 @@ export const Clients: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [setOrganization],
-    afterChange: [logAfterChange],
+    afterChange: [logAfterChange, dispatchEvents],
     afterDelete: [logAfterDelete],
   },
   fields: [
