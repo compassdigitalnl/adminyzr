@@ -926,6 +926,7 @@ function IntegrationCard({ icon, name, description, status, statusLabel, action 
 }
 
 function IntegrationsTab({ organization }: { organization: Record<string, unknown> }) {
+  const ti = useTranslations('integrations')
   const [portalLoading, setPortalLoading] = useState(false)
 
   const subscriptionStatus = (organization.subscriptionStatus as string) || 'none'
@@ -935,6 +936,9 @@ function IntegrationsTab({ organization }: { organization: Record<string, unknow
   const smtpConnected = (organization._integrations as Record<string, boolean> | undefined)?.smtp ?? false
   const storageConnected = (organization._integrations as Record<string, boolean> | undefined)?.storage ?? false
   const sityzrConnected = (organization._integrations as Record<string, boolean> | undefined)?.sityzr ?? false
+  const inboundEmailConnected = (organization._integrations as Record<string, boolean> | undefined)?.inboundEmail ?? false
+  const inboxEmail = (organization._inboxEmail as string) || ''
+  const [inboxCopied, setInboxCopied] = useState(false)
 
   async function handleOpenBillingPortal() {
     setPortalLoading(true)
@@ -1007,6 +1011,33 @@ function IntegrationsTab({ organization }: { organization: Record<string, unknow
           description="Koppel je Sityzr website aan Adminyzr voor automatische synchronisatie van klanten, orders en producten."
           status={sityzrConnected ? 'connected' : 'not_configured'}
           statusLabel={sityzrConnected ? 'Geconfigureerd' : 'Niet geconfigureerd'}
+        />
+
+        {/* SES Inbound Email */}
+        <IntegrationCard
+          icon={<Mail className="h-5 w-5 text-muted-foreground" />}
+          name={ti('sesInbound')}
+          description={ti('sesInboundDescription')}
+          status={inboundEmailConnected ? 'connected' : 'not_configured'}
+          statusLabel={inboundEmailConnected ? ti('connected') : ti('notConfigured')}
+          action={
+            inboundEmailConnected && inboxEmail ? (
+              <div className="flex items-center gap-2">
+                <code className="rounded bg-muted px-2 py-1 text-xs font-mono">{inboxEmail}</code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(inboxEmail)
+                    setInboxCopied(true)
+                    setTimeout(() => setInboxCopied(false), 2000)
+                  }}
+                >
+                  {inboxCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                </Button>
+              </div>
+            ) : undefined
+          }
         />
       </div>
     </div>

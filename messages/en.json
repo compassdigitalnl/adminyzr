@@ -247,6 +247,11 @@
     "reject": "Reject",
     "markPaid": "Mark as paid",
     "noInvoices": "No purchase invoices yet. Click \"New purchase invoice\" to get started.",
+    "inboxEmail": "Email inbox",
+    "inboxEmailDescription": "Forward supplier invoices to this address — they will be automatically processed via OCR.",
+    "copyEmail": "Copy email address",
+    "copied": "Copied!",
+    "inboxNotConfigured": "Email inbox not yet configured. Contact the administrator.",
     "deleteConfirm": "Are you sure you want to delete this purchase invoice?",
     "status": {
       "pending_review": "Pending review",
@@ -684,7 +689,10 @@
     "stripe": "Payments via Stripe",
     "email": "Email (SMTP)",
     "storage": "File storage (R2)",
-    "sityzr": "Sityzr integration"
+    "sityzr": "Sityzr integration",
+    "sesInbound": "Purchase invoices via email",
+    "sesInboundDescription": "Receive purchase invoices automatically via email forwarding with OCR recognition.",
+    "inboxAddress": "Inbox address"
   },
   "apiKeys": {
     "title": "API Keys",

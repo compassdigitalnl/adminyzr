@@ -242,6 +242,11 @@
     "reject": "Ablehnen",
     "markPaid": "Als bezahlt markieren",
     "noInvoices": "Noch keine Eingangsrechnungen. Klicken Sie auf \"Neue Eingangsrechnung\", um zu beginnen.",
+    "inboxEmail": "E-Mail-Posteingang",
+    "inboxEmailDescription": "Leiten Sie Lieferantenrechnungen an diese Adresse weiter — sie werden automatisch per OCR verarbeitet.",
+    "copyEmail": "E-Mail-Adresse kopieren",
+    "copied": "Kopiert!",
+    "inboxNotConfigured": "E-Mail-Posteingang noch nicht konfiguriert. Kontaktieren Sie den Administrator.",
     "deleteConfirm": "Möchten Sie diese Eingangsrechnung wirklich löschen?",
     "status": {
       "pending_review": "In Prüfung",
@@ -518,7 +523,10 @@
     "stripe": "Zahlungen über Stripe",
     "email": "E-Mail (SMTP)",
     "storage": "Dateispeicher (R2)",
-    "sityzr": "Sityzr-Integration"
+    "sityzr": "Sityzr-Integration",
+    "sesInbound": "Eingangsrechnungen per E-Mail",
+    "sesInboundDescription": "Empfangen Sie Eingangsrechnungen automatisch per E-Mail-Weiterleitung mit OCR-Erkennung.",
+    "inboxAddress": "Posteingangsadresse"
   },
   "apiKeys": {
     "title": "API-Schlüssel",

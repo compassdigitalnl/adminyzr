@@ -242,6 +242,11 @@
     "reject": "Rejeter",
     "markPaid": "Marquer comme payée",
     "noInvoices": "Aucune facture d'achat pour le moment. Cliquez sur « Nouvelle facture d'achat » pour commencer.",
+    "inboxEmail": "Boîte de réception e-mail",
+    "inboxEmailDescription": "Transférez les factures fournisseurs à cette adresse — elles seront traitées automatiquement par OCR.",
+    "copyEmail": "Copier l'adresse e-mail",
+    "copied": "Copié !",
+    "inboxNotConfigured": "La boîte de réception e-mail n'est pas encore configurée. Contactez l'administrateur.",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette facture d'achat ?",
     "status": {
       "pending_review": "En cours de vérification",
@@ -518,7 +523,10 @@
     "stripe": "Paiements via Stripe",
     "email": "E-mail (SMTP)",
     "storage": "Stockage de fichiers (R2)",
-    "sityzr": "Intégration Sityzr"
+    "sityzr": "Intégration Sityzr",
+    "sesInbound": "Factures d'achat par e-mail",
+    "sesInboundDescription": "Recevez automatiquement les factures d'achat par transfert d'e-mail avec reconnaissance OCR.",
+    "inboxAddress": "Adresse de réception"
   },
   "apiKeys": {
     "title": "Clés API",

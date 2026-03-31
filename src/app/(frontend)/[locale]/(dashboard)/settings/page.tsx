@@ -17,6 +17,10 @@ export default async function SettingsPage() {
       smtp: hasValue(process.env.SMTP_HOST) && hasValue(process.env.SMTP_USER),
       storage: hasValue(process.env.S3_BUCKET) && hasValue(process.env.S3_ACCESS_KEY_ID),
       sityzr: hasValue(process.env.SITYZR_API_URL) && hasValue(process.env.SITYZR_WEBHOOK_SECRET),
+      inboundEmail: hasValue(process.env.INBOUND_EMAIL_DOMAIN),
+    }
+    if (process.env.INBOUND_EMAIL_DOMAIN && org.slug) {
+      org._inboxEmail = `${org.slug}@${process.env.INBOUND_EMAIL_DOMAIN}`
     }
   } catch {
     // Not logged in

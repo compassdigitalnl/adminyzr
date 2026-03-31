@@ -247,6 +247,11 @@
     "reject": "Afwijzen",
     "markPaid": "Markeer als betaald",
     "noInvoices": "Nog geen inkoopfacturen. Klik op \"Nieuwe inkoopfactuur\" om te beginnen.",
+    "inboxEmail": "E-mail inbox",
+    "inboxEmailDescription": "Stuur leveranciersfacturen door naar dit adres — ze worden automatisch verwerkt via OCR.",
+    "copyEmail": "Kopieer e-mailadres",
+    "copied": "Gekopieerd!",
+    "inboxNotConfigured": "E-mail inbox nog niet geconfigureerd. Neem contact op met de beheerder.",
     "deleteConfirm": "Weet je zeker dat je deze inkoopfactuur wilt verwijderen?",
     "status": {
       "pending_review": "In behandeling",
@@ -684,7 +689,10 @@
     "stripe": "Betalingen via Stripe",
     "email": "E-mail (SMTP)",
     "storage": "Bestandsopslag (R2)",
-    "sityzr": "Sityzr koppeling"
+    "sityzr": "Sityzr koppeling",
+    "sesInbound": "Inkoopfacturen via e-mail",
+    "sesInboundDescription": "Ontvang inkoopfacturen automatisch via e-mail forwarding met OCR-herkenning.",
+    "inboxAddress": "Inbox adres"
   },
   "apiKeys": {
     "title": "API Keys",

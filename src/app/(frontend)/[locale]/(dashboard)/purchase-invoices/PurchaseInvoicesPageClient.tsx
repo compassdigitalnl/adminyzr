@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Plus, Search, Filter, Check, X, Banknote, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, Filter, Check, X, Banknote, Pencil, Trash2, Mail, Copy, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +52,7 @@ type PurchaseInvoicesPageClientProps = {
   initialData: PurchaseInvoicesData
   initialSearch: string
   initialStatus: string
+  inboxEmail?: string
   translations: {
     title: string
     newInvoice: string
@@ -81,6 +82,7 @@ export function PurchaseInvoicesPageClient({
   initialData,
   initialSearch,
   initialStatus,
+  inboxEmail,
   translations,
 }: PurchaseInvoicesPageClientProps) {
   const router = useRouter()
@@ -94,6 +96,14 @@ export function PurchaseInvoicesPageClient({
   const [status, setStatus] = useState(initialStatus)
   const [showForm, setShowForm] = useState(false)
   const [editInvoice, setEditInvoice] = useState<PurchaseInvoice | null>(null)
+  const [emailCopied, setEmailCopied] = useState(false)
+
+  function handleCopyEmail() {
+    if (!inboxEmail) return
+    navigator.clipboard.writeText(inboxEmail)
+    setEmailCopied(true)
+    setTimeout(() => setEmailCopied(false), 2000)
+  }
 
   function handleSearch(value: string) {
     setSearch(value)
@@ -174,6 +184,35 @@ export function PurchaseInvoicesPageClient({
           {translations.newInvoice}
         </Button>
       </div>
+
+      {/* Inbox email banner */}
+      {inboxEmail && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3">
+          <Mail className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-muted-foreground">{t('inboxEmailDescription')}</p>
+            <p className="font-mono text-sm font-medium truncate">{inboxEmail}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyEmail}
+            className="shrink-0"
+          >
+            {emailCopied ? (
+              <>
+                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5 text-green-600" />
+                {t('copied')}
+              </>
+            ) : (
+              <>
+                <Copy className="mr-1.5 h-3.5 w-3.5" />
+                {t('copyEmail')}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex items-center gap-3">
