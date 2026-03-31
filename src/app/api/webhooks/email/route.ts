@@ -8,7 +8,7 @@ import { processInvoiceOcr } from '@/lib/services/ocr'
  *
  * Ondersteunt drie inbound methodes:
  *
- * 1. AWS SES via SNS — per-tenant catch-all op {slug}@inbox.adminyzr.io
+ * 1. AWS SES via SNS — per-tenant catch-all op {slug}@inbox.adminyzr.com
  *    SES slaat de mail op in S3, SNS stuurt notificatie naar dit endpoint.
  *    Tenant wordt bepaald aan de hand van het ontvangstadres (To-header).
  *
@@ -19,7 +19,7 @@ import { processInvoiceOcr } from '@/lib/services/ocr'
  * POST /api/webhooks/email?key=CRON_SECRET
  */
 
-const INBOUND_EMAIL_DOMAIN = process.env.INBOUND_EMAIL_DOMAIN || 'inbox.adminyzr.io'
+const INBOUND_EMAIL_DOMAIN = process.env.INBOUND_EMAIL_DOMAIN || 'inbox.adminyzr.com'
 
 export async function POST(request: NextRequest) {
   const key = request.nextUrl.searchParams.get('key')
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Extract org slug from a recipient address like "acme@inbox.adminyzr.io"
+ * Extract org slug from a recipient address like "acme@inbox.adminyzr.com"
  */
 function extractSlugFromRecipient(recipients: string[]): string | null {
   for (const addr of recipients) {
