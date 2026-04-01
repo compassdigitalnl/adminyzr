@@ -52,7 +52,7 @@ Stel in via Ploi > Site > Environment:
 ```env
 DATABASE_URL=postgresql://user:pass@localhost:5432/adminyzr
 PAYLOAD_SECRET=<random-64-char-string>
-NEXT_PUBLIC_APP_URL=https://adminyzr.io
+NEXT_PUBLIC_APP_URL=https://adminyzr.com
 
 # Cloudflare R2
 S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
@@ -66,7 +66,7 @@ SMTP_HOST=email-smtp.eu-central-1.amazonaws.com
 SMTP_PORT=587
 SMTP_USER=<ses-user>
 SMTP_PASS=<ses-pass>
-MAIL_FROM=noreply@adminyzr.io
+MAIL_FROM=noreply@adminyzr.com
 
 # Cron
 CRON_SECRET=<random-string>

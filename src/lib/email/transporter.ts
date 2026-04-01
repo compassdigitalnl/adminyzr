@@ -20,5 +20,5 @@ export function getMailTransporter(): nodemailer.Transporter {
 }
 
 export function getFromAddress(): string {
-  return process.env.MAIL_FROM || 'noreply@adminyzr.io'
+  return process.env.MAIL_FROM || 'noreply@adminyzr.com'
 }

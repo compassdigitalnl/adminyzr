@@ -30,7 +30,7 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
   }))
 
   await transporter.sendMail({
-    from: from || `"Adminyzr" <${process.env.MAIL_FROM || 'noreply@adminyzr.io'}>`,
+    from: from || `"Adminyzr" <${process.env.MAIL_FROM || 'noreply@adminyzr.com'}>`,
     to,
     subject,
     html,

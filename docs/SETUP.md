@@ -12,7 +12,7 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/adminyzr
 
 # Payload CMS
 PAYLOAD_SECRET=<openssl rand -hex 32>
-NEXT_PUBLIC_APP_URL=https://adminyzr.compassdigital.nl
+NEXT_PUBLIC_APP_URL=https://adminyzr.com
 
 # Cron secret (voor automatische taken)
 CRON_SECRET=<openssl rand -hex 16>
@@ -28,7 +28,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=<ses-user>
 SMTP_PASS=<ses-pass>
-MAIL_FROM=noreply@adminyzr.io
+MAIL_FROM=noreply@adminyzr.com
 ```
 
 ### Bestandsopslag (S3 / Cloudflare R2)
@@ -56,9 +56,9 @@ Na het instellen configureer je providers via:
 **Instellingen → Betalingen → Provider toevoegen**
 
 Webhook URLs (configureer in het dashboard van de provider):
-- **Mollie**: `https://adminyzr.compassdigital.nl/api/webhooks/payments/mollie`
-- **Stripe**: `https://adminyzr.compassdigital.nl/api/webhooks/payments/stripe`
-- **MultiSafePay**: `https://adminyzr.compassdigital.nl/api/webhooks/payments/multisafepay`
+- **Mollie**: `https://adminyzr.com/api/webhooks/payments/mollie`
+- **Stripe**: `https://adminyzr.com/api/webhooks/payments/stripe`
+- **MultiSafePay**: `https://adminyzr.com/api/webhooks/payments/multisafepay`
 
 ### Stripe (SaaS abonnementen)
 
@@ -73,7 +73,7 @@ STRIPE_PRICE_ENTERPRISE=price_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 ```
 
-Webhook URL: `https://adminyzr.compassdigital.nl/api/webhooks/stripe`
+Webhook URL: `https://adminyzr.com/api/webhooks/stripe`
 
 ### Sityzr integratie
 
@@ -85,7 +85,7 @@ SITYZR_API_KEY=<key>
 SITYZR_WEBHOOK_SECRET=<secret>
 ```
 
-Webhook URL: `https://adminyzr.compassdigital.nl/api/webhooks/sityzr`
+Webhook URL: `https://adminyzr.com/api/webhooks/sityzr`
 
 ### OCR (factuurherkenning)
 
@@ -136,7 +136,7 @@ Payload CMS beheert het schema automatisch (`push: true`).
 Bij nieuwe collections die niet automatisch aangemaakt worden:
 ```bash
 # Check via de push-schema endpoint
-curl "https://adminyzr.compassdigital.nl/api/admin/push-schema?secret=<CRON_SECRET>"
+curl "https://adminyzr.com/api/admin/push-schema?secret=<CRON_SECRET>"
 ```
 
 ---

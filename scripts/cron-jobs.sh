@@ -16,7 +16,7 @@ set -euo pipefail
 # Load environment
 source /home/ploi/adminyzr.compassdigital.nl/.env 2>/dev/null || true
 
-APP_URL="${NEXT_PUBLIC_APP_URL:-https://adminyzr.compassdigital.nl}"
+APP_URL="${NEXT_PUBLIC_APP_URL:-https://adminyzr.com}"
 SECRET="${CRON_SECRET}"
 
 if [ -z "$SECRET" ]; then
