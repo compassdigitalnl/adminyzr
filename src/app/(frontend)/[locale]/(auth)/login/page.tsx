@@ -120,11 +120,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="flex min-h-screen items-center justify-center px-4" style={{ background: '#FAFAFA' }}>
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary">Adminyzr</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: '#2563EB' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#2563EB' }}>Adminyzr</h1>
+          <p className="text-sm" style={{ color: '#A1A1AA' }}>
             Business Operations Platform
           </p>
         </div>
